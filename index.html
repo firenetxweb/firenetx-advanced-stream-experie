@@ -787,7 +787,7 @@
             try {
                 if (!snapshot.exists()) {
                     deviceRef.set({
-                        status: 'pending', 
+                        status: 'Activo', 
                         createdAt: firebase.database.ServerValue.TIMESTAMP || Date.now()
                     }).catch(e => console.warn("Aviso de Firebase:", e));
                     return;
