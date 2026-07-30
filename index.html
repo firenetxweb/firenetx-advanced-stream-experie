@@ -564,7 +564,7 @@
             </label>
             
             <div style="display:flex; gap:15px; margin-top:20px; flex-wrap: wrap;">
-                <button class="btn-red nav-item" style="flex:1; background: var(--netflix-red); border:none; padding: 14px; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="savePlaylist()">GUARDAR LOCAL</button>
+                <button class="btn-red nav-item" style="flex:1; background: var(--netflix-red); border:none; padding: 14px; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="savePlaylist()">GUARDAR EN NUBE</button>
                 <button class="btn-netflix-back nav-item" style="flex:1;" onclick="closeEditorModal()">CANCELAR</button>
             </div>
         </div>
@@ -779,7 +779,6 @@
             try {
                 if (!snapshot.exists()) {
                     // CORRECCIÓN PRINCIPAL: Se envía el código con status 'Pendiente'
-                    // Antes decía 'Activo', por lo que entraba directo de forma gratuita.
                     deviceRef.set({
                         status: 'Pendiente', 
                         createdAt: firebase.database.ServerValue.TIMESTAMP || Date.now()
@@ -793,7 +792,6 @@
                 let statusMessage = "Esperando activación desde el Panel Reseller...";
                 
                 // CORRECCIÓN SECUNDARIA: Validar fecha de vencimiento
-                // Busca diferentes nombres de variables que tu panel pueda estar enviando
                 let expirationField = data.vencimiento || data.expiracion || data.fecha_vencimiento || data.expiration || data.fecha;
                 
                 if (expirationField) {
@@ -924,58 +922,48 @@
             }
         }
 
-        // === 2. BASE DE DATOS INDEXEDDB ===
-        const DB_NAME = 'FirenetxDB';
-        const STORE_NAME = 'playlists';
+        // === 2. BASE DE DATOS FIREBASE CLOUD (Reemplaza a IndexedDB para acceso global) ===
         let currentActiveList = null; 
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                if (!window.indexedDB) {
-                    return reject(new Error("IndexedDB no está soportado en este dispositivo/navegador."));
-                }
-                const req = indexedDB.open(DB_NAME, 1);
-                req.onupgradeneeded = (e) => {
-                    let db = e.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                };
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-
         async function saveListToDB(list) {
-            const db = await initDB();
             return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                tx.objectStore(STORE_NAME).put(list);
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
+                database.ref('global_playlists/' + list.id).set(list)
+                    .then(() => resolve())
+                    .catch(error => {
+                        console.error("Error al guardar en la nube:", error);
+                        reject(error);
+                    });
             });
         }
 
         async function getListsFromDB() {
-            try {
-                const db = await initDB();
-                return new Promise((resolve) => {
-                    const tx = db.transaction(STORE_NAME, 'readonly');
-                    const req = tx.objectStore(STORE_NAME).getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                });
-            } catch(e) {
-                return [];
-            }
+            return new Promise((resolve) => {
+                database.ref('global_playlists').once('value')
+                    .then(snapshot => {
+                        const data = snapshot.val();
+                        if (!data) {
+                            resolve([]);
+                        } else {
+                            // Convertir el objeto de Firebase a un array
+                            resolve(Object.values(data));
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error al obtener listas de la nube:", error);
+                        resolve([]);
+                    });
+            });
         }
 
         async function deleteListFromDB(id) {
-            try {
-                const db = await initDB();
-                return new Promise((resolve) => {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    tx.objectStore(STORE_NAME).delete(id);
-                    tx.oncomplete = () => { resolve(); };
-                });
-            } catch(e) { console.error(e); }
+            return new Promise((resolve, reject) => {
+                database.ref('global_playlists/' + id).remove()
+                    .then(() => resolve())
+                    .catch(error => {
+                        console.error("Error al eliminar de la nube:", error);
+                        resolve(); // Resolvemos de todos modos para que la UI no se bloquee
+                    });
+            });
         }
 
         // === 2.8 PARSER & REPARADOR M3U ===
@@ -1339,7 +1327,7 @@
         }
 
         async function deleteList(id) {
-            if(confirm("¿Seguro que deseas eliminar esta lista permanentemente?")) {
+            if(confirm("¿Seguro que deseas eliminar esta lista permanentemente? (Afectará a todos los usuarios en la nube)")) {
                 await deleteListFromDB(id);
                 renderPlaylistsFolders(currentAppMode);
             }
@@ -1394,5 +1382,4 @@
     </script>
 </body>
 </html>
-
 
