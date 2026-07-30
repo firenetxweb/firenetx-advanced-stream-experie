@@ -490,12 +490,14 @@
             width: 100%; max-width: 1100px; height: 85vh; overflow: hidden; position: relative; 
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255,255,255,0.05);
             border-radius: 24px; border: 1px solid var(--glass-border); 
+            transition: background-image 0.5s ease-in-out;
         }
         .smarters-synopsis-layout { display: flex; width: 100%; height: 100%; background: transparent; }
         
         .synopsis-left-col { 
             width: 320px; min-width: 320px; padding: 35px; display: flex; flex-direction: column; gap: 25px; 
-            border-right: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.3); justify-content: flex-start; 
+            border-right: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.5); justify-content: flex-start; 
+            backdrop-filter: blur(5px);
         }
         .synopsis-poster-wrapper { 
             width: 100%; aspect-ratio: 2/3; border-radius: 12px; overflow: hidden; 
@@ -523,8 +525,9 @@
         .info-grid-value { color: #fff; font-weight: 400; }
         
         .plot-container-smarters { 
-            background: rgba(0, 0, 0, 0.4); padding: 20px; border-radius: 12px; 
+            background: rgba(0, 0, 0, 0.6); padding: 20px; border-radius: 12px; 
             border-left: 4px solid var(--neon-red); margin-top: 10px; display: flex; flex-direction: column; gap: 12px; 
+            backdrop-filter: blur(5px);
         }
         .plot-box-smarters { font-size: 15px; line-height: 1.7; color: #cbd5e1; font-weight: 400; }
 
@@ -774,7 +777,7 @@
                 <div class="synopsis-right-col">
                     <h1 id="m-title" class="synopsis-title"></h1>
                     <div class="meta-data-smarters">
-                        <span class="smarters-badge azul" style="font-weight:900;">HQ</span>
+                        <!-- Generado dinámicamente -->
                     </div>
                     <div class="smarters-divider"></div>
                     <div class="plot-container-smarters"><div id="m-plot" class="plot-box-smarters">Contenido listo para transmitir por red neuronal.</div></div>
@@ -785,6 +788,12 @@
 
     <!-- SCRIPTS LÓGICOS -->
     <script>
+        // === CONFIGURACIÓN TMDB API (INYECCIÓN DE METADATOS) ===
+        const TMDB_API_KEY = '61113334178b7302314481eedcd6630f'; // <--- REEMPLAZA ESTO CON TU ID DE TMDB
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+        const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+        const TMDB_BACKDROP_BASE = 'https://image.tmdb.org/t/p/original';
+
         // === NAVEGACIÓN GLOBAL D-PAD TV (SPATIAL NAVIGATION) ===
         document.addEventListener('keydown', function(e) {
             const key = e.key || e.keyCode;
@@ -1075,7 +1084,6 @@
                                 document.getElementById('login').style.display = 'none';
                                 document.getElementById('main-nav').style.display = 'flex';
                                 changeMode('home');
-                                loadTMDBHome();
                             } catch(domErr) {
                                 console.error("Error UI render:", domErr);
                             }
@@ -1133,8 +1141,7 @@
                     isEditorMode = !isEditorMode;
                     alert(isEditorMode ? "MODO EDITOR ACTIVADO.\nAhora puedes agregar, editar listas y modificar contenido libremente." : "MODO EDITOR DESACTIVADO.");
                     
-                    // Mostrar u ocultar botón de editor en inicio
-                    document.getElementById('home-editor-btn').style.display = isEditorMode ? 'block' : 'none';
+                    document.getElementById('home-editor-btn').style.display = isEditorMode && currentAppMode === 'home' ? 'block' : 'none';
 
                     if (currentAppMode && currentAppMode !== 'home') {
                         if (currentActiveList) renderCategories(currentAppMode);
@@ -1289,7 +1296,6 @@
             });
             if(activeNav) activeNav.classList.add('active');
 
-            // --- OCULTAR ENLACES DE LA NAVBAR SOLO EN LA SECCIÓN DE INICIO ---
             const navLinksContainer = document.getElementById('nav-content-links');
             if (mode === 'home') {
                 navLinksContainer.style.display = 'none';
@@ -1306,6 +1312,125 @@
             }
         }
 
+        // === HOME SLIDER Y CAROUSEL LOGIC ===
+        async function loadTMDBHome() {
+            document.getElementById('loader').style.display = 'flex';
+            try {
+                const snapshot = await database.ref('global_home').once('value');
+                const homeData = snapshot.val() || {};
+                
+                // Fondo principal
+                if (homeData.bg) {
+                    document.getElementById('home-bg').style.backgroundImage = `url('${homeData.bg}')`;
+                } else {
+                    document.getElementById('home-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original/9l1eZiJHmhr5jIlthMdJN5WyqMt.jpg')`; // Default
+                }
+
+                const carousel = document.getElementById('home-carousel');
+                carousel.innerHTML = '';
+                
+                let slides = homeData.slides ? Object.values(homeData.slides) : [];
+                
+                if (slides.length === 0) {
+                    slides = [
+                        { id: '1', title: 'FIRENETX PRO', plot: 'Bienvenido al sistema avanzado de streaming.', poster: 'https://image.tmdb.org/t/p/w500/A4j8S6moJS2zNtRR8oWF08gRnL5.jpg', backdrop: 'https://image.tmdb.org/t/p/original/9l1eZiJHmhr5jIlthMdJN5WyqMt.jpg' }
+                    ];
+                }
+
+                const slideSelect = document.getElementById('home-slide-selector');
+                slideSelect.innerHTML = '<option value="new">+ AGREGAR NUEVO SLIDE</option>';
+
+                slides.forEach((slide) => {
+                    let opt = document.createElement('option');
+                    opt.value = slide.id;
+                    opt.innerText = `Edit: ${slide.title}`;
+                    slideSelect.appendChild(opt);
+
+                    let item = document.createElement('div');
+                    item.className = 'carousel-item nav-item';
+                    item.setAttribute('tabindex', '0');
+                    item.innerHTML = `<img src="${slide.poster}" alt="${slide.title}">`;
+                    
+                    item.addEventListener('focus', () => updateHomeHero(slide));
+                    item.addEventListener('mouseover', () => updateHomeHero(slide));
+                    
+                    carousel.appendChild(item);
+                });
+
+                if(slides.length > 0) updateHomeHero(slides[0]);
+
+            } catch (e) {
+                console.error("Error cargando Home:", e);
+            }
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        function updateHomeHero(slide) {
+            document.getElementById('home-bg').style.backgroundImage = `url('${slide.backdrop}')`;
+            document.getElementById('home-title').innerText = slide.title;
+            document.getElementById('home-plot').innerText = slide.plot;
+        }
+
+        function openHomeEditorModal() { document.getElementById('home-editor-modal').style.display = 'flex'; }
+        function closeHomeEditorModal() { document.getElementById('home-editor-modal').style.display = 'none'; }
+        
+        async function saveCustomHomeBg() {
+            let bg = document.getElementById('home-custom-bg-input').value.trim();
+            if(bg) {
+                await database.ref('global_home/bg').set(bg);
+                alert("Fondo guardado con éxito.");
+                loadTMDBHome();
+            }
+        }
+        
+        async function loadHomeSlideDataForEdit() {
+            let slideId = document.getElementById('home-slide-selector').value;
+            if (slideId === 'new') {
+                document.getElementById('slide-title-input').value = '';
+                document.getElementById('slide-plot-input').value = '';
+                document.getElementById('slide-backdrop-input').value = '';
+                document.getElementById('slide-poster-input').value = '';
+                document.getElementById('btn-delete-slide').style.display = 'none';
+            } else {
+                let snap = await database.ref(`global_home/slides/${slideId}`).once('value');
+                let data = snap.val();
+                if(data) {
+                    document.getElementById('slide-title-input').value = data.title || '';
+                    document.getElementById('slide-plot-input').value = data.plot || '';
+                    document.getElementById('slide-backdrop-input').value = data.backdrop || '';
+                    document.getElementById('slide-poster-input').value = data.poster || '';
+                    document.getElementById('btn-delete-slide').style.display = 'block';
+                }
+            }
+        }
+        
+        async function saveHomeSlide() {
+            let id = document.getElementById('home-slide-selector').value;
+            if (id === 'new') id = 'slide_' + Date.now();
+            let data = {
+                id: id,
+                title: document.getElementById('slide-title-input').value,
+                plot: document.getElementById('slide-plot-input').value,
+                backdrop: document.getElementById('slide-backdrop-input').value,
+                poster: document.getElementById('slide-poster-input').value
+            };
+            await database.ref(`global_home/slides/${id}`).set(data);
+            alert("Slide guardado.");
+            loadTMDBHome();
+            closeHomeEditorModal();
+        }
+        
+        async function deleteHomeSlide() {
+            let id = document.getElementById('home-slide-selector').value;
+            if (id !== 'new') {
+                await database.ref(`global_home/slides/${id}`).remove();
+                alert("Slide eliminado.");
+                loadTMDBHome();
+                closeHomeEditorModal();
+            }
+        }
+
+        // === LISTAS Y CATEGORÍAS ===
         async function renderPlaylistsFolders(mode) {
             const grid = document.getElementById('main-content-grid');
             const sidebar = document.getElementById('left-category-sidebar');
@@ -1492,21 +1617,43 @@
                         </div>
                     `;
                 } else {
-                    let posterSrc = (item.logo && item.logo.trim() !== '') ? item.logo : null;
-                    if (posterSrc) {
-                        card.innerHTML = `
-                            <img src="${posterSrc}" alt="${safeTitle}" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'neon-channel-box\\'><span class=\\'neon-channel-text\\'>${safeTitle}</span></div>';">
-                            <div class="card-title-container">
-                                <span class="card-title-text">${safeTitle}</span>
-                            </div>
-                        `;
-                    } else {
-                        card.innerHTML = `
-                            <div class="neon-channel-box">
-                                <span class="neon-channel-text">${safeTitle}</span>
-                            </div>
-                        `;
-                    }
+                    // Contenido inicial para películas/series antes de inyectar TMDB
+                    let initialImg = (item.logo && item.logo.trim() !== '') 
+                        ? `<img src="${item.logo}" alt="${safeTitle}" class="card-img-dyn">` 
+                        : `<div class="neon-channel-box card-img-dyn"><span class="neon-channel-text">${safeTitle}</span></div>`;
+                    
+                    card.innerHTML = `
+                        ${initialImg}
+                        <div class="card-title-container">
+                            <span class="card-title-text">${safeTitle}</span>
+                        </div>
+                    `;
+
+                    // Inyección Asíncrona de Pósters TMDB en Grid
+                    let cleanTitle = cleanTitleForTMDB(item.title);
+                    let searchType = currentAppMode === 'series' ? 'tv' : 'movie';
+                    
+                    fetch(`${TMDB_BASE_URL}/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=es-MX`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.results && data.results.length > 0 && data.results[0].poster_path) {
+                                let tmdbPosterUrl = `${TMDB_IMAGE_BASE}${data.results[0].poster_path}`;
+                                let existingImg = card.querySelector('.card-img-dyn');
+                                
+                                if (existingImg && existingImg.tagName.toLowerCase() === 'img') {
+                                    existingImg.src = tmdbPosterUrl;
+                                } else if (existingImg) {
+                                    // Si era un neon-box, reemplazarlo completamente
+                                    let newImg = document.createElement('img');
+                                    newImg.src = tmdbPosterUrl;
+                                    newImg.className = 'card-img-dyn';
+                                    newImg.alt = safeTitle;
+                                    newImg.onerror = function() { this.onerror=null; this.src = item.logo || ''; };
+                                    existingImg.parentNode.replaceChild(newImg, existingImg);
+                                }
+                            }
+                        })
+                        .catch(err => console.log('Error inyectando TMDB en Grid:', err));
                 }
 
                 card.onclick = () => {
@@ -1545,323 +1692,164 @@
             });
         }
 
-        function openItemModal(item) {
-            document.getElementById('m-title').innerText = item.title || 'Sin Título';
-            const posterWrapper = document.getElementById('m-poster-container');
-            
-            if (!item.logo) {
-                posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${item.title || 'CONTENIDO'}</span></div>`;
-            } else {
-                posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
-            }
+        function cleanTitleForTMDB(title) {
+            return title.replace(/\b(1080p|720p|4k|mkv|mp4|latino|castellano|sub|subtitulado|dual|hd|fhd|ts|cam|rip|audio|original)\b/gi, '')
+                        .replace(/[\[\(\{\-].*?[\]\)\}\-]/g, '')
+                        .replace(/_|\./g, ' ')
+                        .trim();
+        }
 
-            document.getElementById('m-plot').innerText = `Contenido disponible en la red Firenetx. Grupo: ${item.group || 'General'}`;
+        async function openItemModal(item) {
+            const modal = document.getElementById('modal-info');
+            modal.style.display = 'flex';
+            
+            // Valores por defecto
+            document.getElementById('m-title').innerText = item.title || 'Cargando...';
+            document.getElementById('m-plot').innerText = 'Conectando con la base de datos TMDB...';
+            document.querySelector('.meta-data-smarters').innerHTML = '';
+            document.querySelector('.modal-content').style.backgroundImage = 'none';
+
+            const posterWrapper = document.getElementById('m-poster-container');
+            posterWrapper.innerHTML = `<div class="nf-loader" style="margin:auto;"></div>`;
             
             const playBtn = document.getElementById('m-play-btn');
             playBtn.onclick = () => {
                 if (item.url) {
                     let url = item.url;
                     let scheme = url.startsWith('https') ? 'https' : (url.startsWith('http') ? 'http' : '');
-                    
                     if (scheme) {
                         let cleanUrl = url.replace(/(^\w+:|^)\/\//, '');
-                        let intentUrl = `intent://${cleanUrl}#Intent;scheme=${scheme};action=android.intent.action.VIEW;type=video/*;end;`;
-                        window.location.href = intentUrl;
+                        window.location.href = `intent://${cleanUrl}#Intent;scheme=${scheme};action=android.intent.action.VIEW;type=video/*;end;`;
                     } else {
-                        let intentUrl = `intent:${url}#Intent;action=android.intent.action.VIEW;type=video/*;end;`;
-                        window.location.href = intentUrl;
+                        window.location.href = `intent:${url}#Intent;action=android.intent.action.VIEW;type=video/*;end;`;
                     }
                 } else {
                     alert('URL de reproducción no válida.');
                 }
             };
 
-            document.getElementById('modal-info').style.display = 'flex';
-            setTimeout(() => playBtn.focus(), 100); 
+            // Búsqueda en TMDB para Modal
+            let cleanTitle = cleanTitleForTMDB(item.title);
+            let searchType = currentAppMode === 'series' ? 'tv' : 'movie';
+            
+            try {
+                let res = await fetch(`${TMDB_BASE_URL}/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=es-MX`);
+                let data = await res.json();
+                
+                if (data.results && data.results.length > 0) {
+                    let tmdbItem = data.results[0];
+                    
+                    document.getElementById('m-title').innerText = tmdbItem.title || tmdbItem.name || item.title;
+                    document.getElementById('m-plot').innerText = tmdbItem.overview || `Contenido disponible en la red Firenetx. Grupo: ${item.group || 'General'}`;
+                    
+                    if (tmdbItem.poster_path) {
+                        posterWrapper.innerHTML = `<img id="m-poster" src="${TMDB_IMAGE_BASE}${tmdbItem.poster_path}" onerror="handleImgError(this)">`;
+                    } else if (item.logo) {
+                        posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
+                    } else {
+                        posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${document.getElementById('m-title').innerText}</span></div>`;
+                    }
+                    
+                    // Manejo de Fondo (Backdrop) que estaba cortado
+                    if (tmdbItem.backdrop_path) {
+                        document.querySelector('.modal-content').style.backgroundImage = `linear-gradient(to right, rgba(5,5,7,1) 15%, rgba(5,5,7,0.7) 50%, rgba(5,5,7,0.2) 100%), url(${TMDB_BACKDROP_BASE}${tmdbItem.backdrop_path})`;
+                        document.querySelector('.modal-content').style.backgroundSize = 'cover';
+                        document.querySelector('.modal-content').style.backgroundPosition = 'center top';
+                    }
+
+                    // Metadatos adicionales calculados a partir de TMDB
+                    let year = (tmdbItem.release_date || tmdbItem.first_air_date || '').substring(0,4);
+                    let rating = tmdbItem.vote_average ? tmdbItem.vote_average.toFixed(1) : '';
+                    let metaHTML = `<span class="smarters-badge azul" style="font-weight:900;">HQ</span>`;
+                    
+                    if(year) metaHTML += `<span class="smarters-badge">${year}</span>`;
+                    if(rating) metaHTML += `<span class="smarters-badge" style="background:#f5c518; color:#000; border:none; font-weight:800;"><i class="fas fa-star" style="font-size:11px;"></i> ${rating}</span>`;
+                    
+                    document.querySelector('.meta-data-smarters').innerHTML = metaHTML;
+                } else {
+                    // Fallback si TMDB no encuentra resultados
+                    document.getElementById('m-title').innerText = item.title;
+                    document.getElementById('m-plot').innerText = `Contenido disponible en la red Firenetx. Grupo: ${item.group || 'General'}`;
+                    if (item.logo) {
+                        posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
+                    } else {
+                        posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${item.title}</span></div>`;
+                    }
+                    document.querySelector('.meta-data-smarters').innerHTML = `<span class="smarters-badge azul" style="font-weight:900;">HQ</span>`;
+                }
+            } catch (error) {
+                console.error('Error TMDB Modal:', error);
+                document.getElementById('m-plot').innerText = 'No se pudo conectar a los servidores de información.';
+                document.querySelector('.meta-data-smarters').innerHTML = `<span class="smarters-badge azul" style="font-weight:900;">HQ</span>`;
+                if (item.logo) {
+                    posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
+                } else {
+                    posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${item.title}</span></div>`;
+                }
+            }
+            
+            setTimeout(() => {
+                document.getElementById('m-play-btn').focus();
+            }, 100);
+        }
+
+        // === FUNCIONES MODALES GLOBALES Y EDITOR ===
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+            document.querySelector('.modal-content').style.backgroundImage = 'none';
+        }
+
+        function closeEditorModal() {
+            document.getElementById('playlist-editor-modal').style.display = 'none';
+        }
+
+        function closeItemEditor() {
+            document.getElementById('item-editor-modal').style.display = 'none';
+        }
+
+        function handleImgError(img) {
+            img.onerror = null;
+            let parent = img.parentNode;
+            let title = document.getElementById('m-title') ? document.getElementById('m-title').innerText : 'Contenido';
+            parent.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${title}</span></div>`;
         }
 
         function openItemEditorModal(cat, idx) {
             let item = parsedM3U[cat][idx];
-            if (!item) return;
-
-            document.getElementById('item-title').value = item.title || '';
+            document.getElementById('item-title').value = item.title;
             document.getElementById('item-logo').value = item.logo || '';
-            document.getElementById('item-url').value = item.url || '';
+            document.getElementById('item-url').value = item.url;
             document.getElementById('item-original-cat').value = cat;
             document.getElementById('item-original-idx').value = idx;
-
             document.getElementById('item-editor-modal').style.display = 'flex';
         }
 
         async function saveItemEdit() {
             let cat = document.getElementById('item-original-cat').value;
-            let idx = parseInt(document.getElementById('item-original-idx').value);
+            let idx = document.getElementById('item-original-idx').value;
+            parsedM3U[cat][idx].title = document.getElementById('item-title').value;
+            parsedM3U[cat][idx].logo = document.getElementById('item-logo').value;
+            parsedM3U[cat][idx].url = document.getElementById('item-url').value;
+            closeItemEditor();
+            await saveM3UState();
+            renderGridItems(cat);
+        }
 
-            if (parsedM3U[cat] && parsedM3U[cat][idx]) {
-                parsedM3U[cat][idx].title = document.getElementById('item-title').value.trim();
-                parsedM3U[cat][idx].logo = document.getElementById('item-logo').value.trim();
-                parsedM3U[cat][idx].url = document.getElementById('item-url').value.trim();
-
-                closeItemEditor();
+        async function deleteItem(cat, idx) {
+            if(confirm("¿Estás seguro de que deseas eliminar este elemento?")) {
+                parsedM3U[cat].splice(idx, 1);
                 await saveM3UState();
                 renderGridItems(cat);
             }
         }
 
-        async function deleteItem(cat, idx) {
-            if (confirm("¿Deseas eliminar este elemento?")) {
-                if (parsedM3U[cat]) {
-                    parsedM3U[cat].splice(idx, 1);
-                    await saveM3UState();
-                    renderGridItems(cat);
-                }
-            }
-        }
-
         async function deleteList(id) {
-            if(confirm("¿Seguro que deseas eliminar esta lista permanentemente? (Afectará a todos los usuarios en la nube)")) {
+            if(confirm("¿Estás seguro de que deseas eliminar esta lista completamente de la base de datos?")) {
                 await deleteListFromDB(id);
                 renderPlaylistsFolders(currentAppMode);
             }
         }
 
-        function closeEditorModal() { document.getElementById('playlist-editor-modal').style.display = 'none'; }
-        function closeItemEditor() { document.getElementById('item-editor-modal').style.display = 'none'; }
-        function closeModals() { document.getElementById('modal-info').style.display = 'none'; }
-        function handleImgError(img) { 
-            img.onerror = null;
-            img.parentNode.innerHTML = '<div class="neon-channel-box"><span class="neon-channel-text">FIRENETX</span></div>';
-        }
-
-        // --- CATÁLOGO DE PLATAFORMAS CON LOGOS Y AUTOMATIZACIÓN ---
-        let homeCarouselInterval;
-        let currentHomeIndex = 0;
-        let homeCustomBackground = null;
-
-        let homeSlideItems = [
-            {
-                title: "NETFLIX",
-                plot: "Series y películas exclusivas. Disfruta del mejor contenido original de la plataforma número uno del mundo.",
-                backdrop: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1920&auto=format&fit=crop",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg"
-            },
-            {
-                title: "DISNEY+",
-                plot: "La magia de Disney, Pixar, Marvel, Star Wars y National Geographic reunida en un solo lugar.",
-                backdrop: "https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?q=80&w=1920&auto=format&fit=crop",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg"
-            },
-            {
-                title: "MAX",
-                plot: "Disfruta de los estrenos mundiales de Warner Bros, DC, Cartoon Network y los aclamados originales de HBO.",
-                backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1920&auto=format&fit=crop",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg"
-            },
-            {
-                title: "FOX SPORTS",
-                plot: "La pasión del deporte en vivo. Fútbol internacional, automovilismo, artes marciales mixtas y eventos premium.",
-                backdrop: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1920&auto=format&fit=crop",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/0/02/Fox_Sports_logo.svg"
-            },
-            {
-                title: "PRIME VIDEO",
-                plot: "Producciones originales y galardonadas, películas exitosas y canales premium seleccionados para ti.",
-                backdrop: "https://images.unsplash.com/photo-1588694086422-921d7b309f45?q=80&w=1920&auto=format&fit=crop",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg"
-            },
-            {
-                title: "STAR+",
-                plot: "Deportes en vivo con ESPN, comedias animadas, películas exitosas y series exclusivas de entretenimiento general.",
-                backdrop: "https://images.unsplash.com/photo-1518605368461-1e1e1143c7b8?q=80&w=1920&auto=format&fit=crop",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/b/b3/Star%2B_logo.svg"
-            }
-        ];
-
-        // SINCRO DE DATOS DE INICIO EN FIREBASE NUBE
-        database.ref('home_config').on('value', (snap) => {
-            let data = snap.val();
-            if (data) {
-                if (data.background) homeCustomBackground = data.background;
-                if (data.slides && Array.isArray(data.slides)) homeSlideItems = data.slides;
-                if (currentAppMode === 'home') loadTMDBHome();
-            }
-        });
-
-        function loadTMDBHome() {
-            const titleEl = document.getElementById('home-title');
-            const plotEl = document.getElementById('home-plot');
-            const bgEl = document.getElementById('home-bg');
-            const carousel = document.getElementById('home-carousel');
-
-            if (!carousel) return;
-            carousel.innerHTML = '';
-            
-            if (homeCarouselInterval) clearInterval(homeCarouselInterval);
-
-            function updateHero(index) {
-                if (!homeSlideItems[index]) return;
-                const item = homeSlideItems[index];
-                
-                // Si existe un fondo estático global personalizado en el editor se usa, de lo contrario la imagen individual
-                bgEl.style.backgroundImage = `url('${homeCustomBackground || item.backdrop}')`;
-                titleEl.innerText = item.title;
-                plotEl.innerText = item.plot;
-                
-                Array.from(carousel.children).forEach((el, i) => {
-                    if (i === index) {
-                        el.style.border = '2px solid var(--netflix-red)';
-                        el.style.transform = 'translateY(-8px) scale(1.05)';
-                        el.style.boxShadow = 'var(--neon-glow)';
-                        el.style.zIndex = '10';
-                    } else {
-                        el.style.border = '1px solid var(--glass-border)';
-                        el.style.transform = 'none';
-                        el.style.boxShadow = '0 10px 20px rgba(0,0,0,0.5)';
-                        el.style.zIndex = '1';
-                    }
-                });
-            }
-
-            function startAutoSlide() {
-                if (homeSlideItems.length === 0) return;
-                homeCarouselInterval = setInterval(() => {
-                    currentHomeIndex = (currentHomeIndex + 1) % homeSlideItems.length;
-                    updateHero(currentHomeIndex);
-                    
-                    const activeCard = carousel.children[currentHomeIndex];
-                    if(activeCard) {
-                        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
-                }, 5000);
-            }
-
-            homeSlideItems.forEach((item, idx) => {
-                let card = document.createElement('div');
-                card.className = 'carousel-item nav-item';
-                card.setAttribute('tabindex', '0');
-                
-                card.innerHTML = `<img src="${item.poster}" alt="${item.title}" style="object-fit: contain; padding: 20px; background: rgba(5,5,7,0.9); width: 100%; height: 100%;">`;
-                
-                card.onclick = () => {
-                    currentHomeIndex = idx;
-                    updateHero(currentHomeIndex);
-                    
-                    clearInterval(homeCarouselInterval);
-                    startAutoSlide();
-                };
-                carousel.appendChild(card);
-            });
-
-            currentHomeIndex = 0;
-            if (homeSlideItems.length > 0) {
-                updateHero(0);
-                startAutoSlide();
-            }
-        }
-
-        // --- FUNCIONES DEL EDITOR DE INICIO (IMAGEN DE FONDO Y SLIDER) ---
-        function openHomeEditorModal() {
-            document.getElementById('home-custom-bg-input').value = homeCustomBackground || '';
-            
-            const selector = document.getElementById('home-slide-selector');
-            selector.innerHTML = '<option value="new">+ AGREGAR NUEVO SLIDE</option>';
-            
-            homeSlideItems.forEach((slide, idx) => {
-                let opt = document.createElement('option');
-                opt.value = idx;
-                opt.innerText = `${idx + 1}. ${slide.title}`;
-                selector.appendChild(opt);
-            });
-
-            loadHomeSlideDataForEdit();
-            document.getElementById('home-editor-modal').style.display = 'flex';
-        }
-
-        function closeHomeEditorModal() {
-            document.getElementById('home-editor-modal').style.display = 'none';
-        }
-
-        function loadHomeSlideDataForEdit() {
-            const val = document.getElementById('home-slide-selector').value;
-            const delBtn = document.getElementById('btn-delete-slide');
-
-            if (val === 'new') {
-                document.getElementById('slide-title-input').value = '';
-                document.getElementById('slide-plot-input').value = '';
-                document.getElementById('slide-backdrop-input').value = '';
-                document.getElementById('slide-poster-input').value = '';
-                delBtn.style.display = 'none';
-            } else {
-                let idx = parseInt(val);
-                let slide = homeSlideItems[idx];
-                if (slide) {
-                    document.getElementById('slide-title-input').value = slide.title || '';
-                    document.getElementById('slide-plot-input').value = slide.plot || '';
-                    document.getElementById('slide-backdrop-input').value = slide.backdrop || '';
-                    document.getElementById('slide-poster-input').value = slide.poster || '';
-                    delBtn.style.display = 'block';
-                }
-            }
-        }
-
-        async function saveCustomHomeBg() {
-            let url = document.getElementById('home-custom-bg-input').value.trim();
-            homeCustomBackground = url || null;
-            
-            document.getElementById('loader').style.display = 'flex';
-            await database.ref('home_config/background').set(homeCustomBackground);
-            document.getElementById('loader').style.display = 'none';
-            
-            loadTMDBHome();
-            alert("Imagen de fondo principal actualizada correctamente.");
-        }
-
-        async function saveHomeSlide() {
-            const val = document.getElementById('home-slide-selector').value;
-            const title = document.getElementById('slide-title-input').value.trim();
-            const plot = document.getElementById('slide-plot-input').value.trim();
-            const backdrop = document.getElementById('slide-backdrop-input').value.trim();
-            const poster = document.getElementById('slide-poster-input').value.trim();
-
-            if (!title) {
-                alert("Ingresa un título para el slide.");
-                return;
-            }
-
-            let newSlide = { title, plot, backdrop, poster };
-
-            if (val === 'new') {
-                homeSlideItems.push(newSlide);
-            } else {
-                let idx = parseInt(val);
-                homeSlideItems[idx] = newSlide;
-            }
-
-            document.getElementById('loader').style.display = 'flex';
-            await database.ref('home_config/slides').set(homeSlideItems);
-            document.getElementById('loader').style.display = 'none';
-
-            openHomeEditorModal();
-            loadTMDBHome();
-            alert("Slide guardado correctamente.");
-        }
-
-        async function deleteHomeSlide() {
-            const val = document.getElementById('home-slide-selector').value;
-            if (val !== 'new') {
-                let idx = parseInt(val);
-                if (confirm(`¿Eliminar el slide "${homeSlideItems[idx].title}"?`)) {
-                    homeSlideItems.splice(idx, 1);
-                    
-                    document.getElementById('loader').style.display = 'flex';
-                    await database.ref('home_config/slides').set(homeSlideItems);
-                    document.getElementById('loader').style.display = 'none';
-
-                    openHomeEditorModal();
-                    loadTMDBHome();
-                }
-            }
-        }
     </script>
 </body>
 </html>
