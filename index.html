@@ -377,7 +377,7 @@
         }
         .home-hero-bg {
             position: fixed; inset: 0; width: 100vw; height: 100vh;
-            background-size: cover; background-position: center top; transition: background-image 0.8s ease-in-out; z-index: 1;
+            background-size: cover; background-position: center; transition: background-image 0.8s ease-in-out; z-index: 1;
         }
         .home-hero-overlay {
             position: fixed; inset: 0; width: 100vw; height: 100vh;
@@ -406,7 +406,7 @@
         .home-carousel { display: flex; gap: 15px; overflow-x: auto; padding: 10px 5px 25px 5px; scroll-behavior: smooth; }
         .home-carousel::-webkit-scrollbar { display: none; }
         
-        /* --- CARDS & GRID ADVANCED --- */
+        /* --- CARDS & GRID ADVANCED (MODO VERTICAL 100% SIN CORTES) --- */
         .carousel-item { 
             flex: 0 0 130px; aspect-ratio: 2/3; background: var(--card-bg); border-radius: 12px; 
             cursor: pointer; transition: var(--transition); border: 1px solid var(--glass-border); 
@@ -416,8 +416,7 @@
             transform: translateY(-8px) scale(1.05); border: 2px solid var(--netflix-red) !important; 
             box-shadow: var(--neon-glow) !important; z-index: 10; 
         }
-        /* SOLUCIÓN AL CORTE DE IMAGEN DEL CARRUSEL: object-fit cambiado a contain */
-        .carousel-item img { width: 100%; height: 100%; object-fit: contain; background: transparent; }
+        .carousel-item img { width: 100%; height: 100%; object-fit: contain; background-color: #000; }
 
         .movie-card { 
             width: 100%; aspect-ratio: 2/3; background: var(--card-bg); border-radius: 12px; 
@@ -431,7 +430,7 @@
             transform: translateY(-8px) scale(1.04); border: 2px solid var(--netflix-red) !important; 
             box-shadow: var(--neon-glow); z-index: 10; 
         }
-        .movie-card img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+        .movie-card img { width: 100%; height: 100%; object-fit: contain; background-color: #000; transition: var(--transition); }
         .movie-card:focus img, .movie-card:hover img { filter: brightness(1.1); }
         
         .card-title-container { 
@@ -503,9 +502,9 @@
         .synopsis-poster-wrapper { 
             width: 100%; aspect-ratio: 2/3; border-radius: 12px; overflow: hidden; 
             box-shadow: 0 15px 30px rgba(0,0,0,0.6); border: 1px solid var(--glass-border); 
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; background-color: #000;
         }
-        .synopsis-poster-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .synopsis-poster-wrapper img { width: 100%; height: 100%; object-fit: contain; }
         .synopsis-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         
         .synopsis-right-col { flex: 1; padding: 40px 50px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
@@ -1266,6 +1265,9 @@
         let editingPlaylistId = null;
         let currentFileData = "";
         let parsedM3U = {}; 
+        let homeAutoSlideInterval = null;
+        let homeSlidesList = [];
+        let homeCurrentSlideIndex = 0;
 
         document.getElementById('pl-file').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -1286,6 +1288,11 @@
             currentAppMode = mode;
             currentActiveList = null; 
             
+            if (homeAutoSlideInterval) {
+                clearInterval(homeAutoSlideInterval);
+                homeAutoSlideInterval = null;
+            }
+
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             const activeNav = Array.from(document.querySelectorAll('.nav-link')).find(btn => {
                 let txt = btn.innerText.toLowerCase();
@@ -1313,27 +1320,26 @@
             }
         }
 
-        // === HOME SLIDER Y CAROUSEL LOGIC ===
+        // === HOME SLIDER Y CAROUSEL LOGIC CON ANIMACIÓN AUTOMÁTICA ===
         async function loadTMDBHome() {
             document.getElementById('loader').style.display = 'flex';
             try {
                 const snapshot = await database.ref('global_home').once('value');
                 const homeData = snapshot.val() || {};
                 
-                // Fondo principal
                 if (homeData.bg) {
                     document.getElementById('home-bg').style.backgroundImage = `url('${homeData.bg}')`;
                 } else {
-                    document.getElementById('home-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original/9l1eZiJHmhr5jIlthMdJN5WyqMt.jpg')`; // Default
+                    document.getElementById('home-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original/9l1eZiJHmhr5jIlthMdJN5WyqMt.jpg')`;
                 }
 
                 const carousel = document.getElementById('home-carousel');
                 carousel.innerHTML = '';
                 
-                let slides = homeData.slides ? Object.values(homeData.slides) : [];
+                homeSlidesList = homeData.slides ? Object.values(homeData.slides) : [];
                 
-                if (slides.length === 0) {
-                    slides = [
+                if (homeSlidesList.length === 0) {
+                    homeSlidesList = [
                         { id: '1', title: 'FIRENETX PRO', plot: 'Bienvenido al sistema avanzado de streaming.', poster: 'https://image.tmdb.org/t/p/w500/A4j8S6moJS2zNtRR8oWF08gRnL5.jpg', backdrop: 'https://image.tmdb.org/t/p/original/9l1eZiJHmhr5jIlthMdJN5WyqMt.jpg' }
                     ];
                 }
@@ -1341,7 +1347,7 @@
                 const slideSelect = document.getElementById('home-slide-selector');
                 slideSelect.innerHTML = '<option value="new">+ AGREGAR NUEVO SLIDE</option>';
 
-                slides.forEach((slide) => {
+                homeSlidesList.forEach((slide, idx) => {
                     let opt = document.createElement('option');
                     opt.value = slide.id;
                     opt.innerText = `Edit: ${slide.title}`;
@@ -1352,13 +1358,36 @@
                     item.setAttribute('tabindex', '0');
                     item.innerHTML = `<img src="${slide.poster}" alt="${slide.title}">`;
                     
-                    item.addEventListener('focus', () => updateHomeHero(slide));
-                    item.addEventListener('mouseover', () => updateHomeHero(slide));
+                    item.addEventListener('focus', () => {
+                        homeCurrentSlideIndex = idx;
+                        updateHomeHero(slide);
+                    });
+                    item.addEventListener('mouseover', () => {
+                        homeCurrentSlideIndex = idx;
+                        updateHomeHero(slide);
+                    });
                     
                     carousel.appendChild(item);
                 });
 
-                if(slides.length > 0) updateHomeHero(slides[0]);
+                if(homeSlidesList.length > 0) {
+                    homeCurrentSlideIndex = 0;
+                    updateHomeHero(homeSlidesList[0]);
+                }
+
+                if (homeAutoSlideInterval) clearInterval(homeAutoSlideInterval);
+                homeAutoSlideInterval = setInterval(() => {
+                    if (currentAppMode === 'home' && homeSlidesList.length > 0) {
+                        homeCurrentSlideIndex = (homeCurrentSlideIndex + 1) % homeSlidesList.length;
+                        let nextSlide = homeSlidesList[homeCurrentSlideIndex];
+                        updateHomeHero(nextSlide);
+                        
+                        const items = carousel.querySelectorAll('.carousel-item');
+                        if (items[homeCurrentSlideIndex]) {
+                            items[homeCurrentSlideIndex].scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
+                        }
+                    }
+                }, 5000);
 
             } catch (e) {
                 console.error("Error cargando Home:", e);
@@ -1618,7 +1647,6 @@
                         </div>
                     `;
                 } else {
-                    // Contenido inicial para películas/series antes de inyectar TMDB
                     let initialImg = (item.logo && item.logo.trim() !== '') 
                         ? `<img src="${item.logo}" alt="${safeTitle}" class="card-img-dyn">` 
                         : `<div class="neon-channel-box card-img-dyn"><span class="neon-channel-text">${safeTitle}</span></div>`;
@@ -1630,7 +1658,6 @@
                         </div>
                     `;
 
-                    // Inyección Asíncrona de Pósters TMDB en Grid
                     let cleanTitle = cleanTitleForTMDB(item.title);
                     let searchType = currentAppMode === 'series' ? 'tv' : 'movie';
                     
@@ -1644,7 +1671,6 @@
                                 if (existingImg && existingImg.tagName.toLowerCase() === 'img') {
                                     existingImg.src = tmdbPosterUrl;
                                 } else if (existingImg) {
-                                    // Si era un neon-box, reemplazarlo completamente
                                     let newImg = document.createElement('img');
                                     newImg.src = tmdbPosterUrl;
                                     newImg.className = 'card-img-dyn';
@@ -1693,63 +1719,160 @@
             });
         }
 
-        // === COMPLETADO CORRECTO DE FUNCIONES JS CORTADAS ===
         function cleanTitleForTMDB(title) {
-            return title.replace(/\b(1080p|720p|4k|hd|sd|fhd|mkv|mp4|h264|latino|castellano|subtitulado|dual)\b/gi, '')
-                        .replace(/[\[\(\-].*?[\]\)\-]/g, '')
-                        .replace(/_/g, ' ')
+            return title.replace(/\b(1080p|720p|4k|mkv|mp4|latino|castellano|sub|subtitulado|dual|hd|fhd|ts|cam|rip|audio|original)\b/gi, '')
+                        .replace(/[\[\(\{\-].*?[\]\)\}\-]/g, '')
+                        .replace(/_|\./g, ' ')
                         .trim();
         }
 
-        function openItemModal(item) {
-            document.getElementById('m-title').innerText = item.title || 'Contenido';
-            document.getElementById('m-poster').src = item.logo || 'https://via.placeholder.com/320x480?text=Sin+Poster';
-            document.getElementById('modal-info').style.display = 'flex';
+        async function openItemModal(item) {
+            const modal = document.getElementById('modal-info');
+            modal.style.display = 'flex';
+            
+            document.getElementById('m-title').innerText = item.title || 'Cargando...';
+            document.getElementById('m-plot').innerText = 'Conectando con la base de datos TMDB...';
+            document.querySelector('.meta-data-smarters').innerHTML = '';
+            document.querySelector('.modal-content').style.backgroundImage = 'none';
+
+            const posterWrapper = document.getElementById('m-poster-container');
+            posterWrapper.innerHTML = `<div class="nf-loader" style="margin:auto;"></div>`;
+            
+            const playBtn = document.getElementById('m-play-btn');
+            playBtn.onclick = () => {
+                if (item.url) {
+                    let url = item.url;
+                    let scheme = url.startsWith('https') ? 'https' : (url.startsWith('http') ? 'http' : '');
+                    if (scheme) {
+                        let cleanUrl = url.replace(/(^\w+:|^)\/\//, '');
+                        window.location.href = `intent://${cleanUrl}#Intent;scheme=${scheme};action=android.intent.action.VIEW;type=video/*;end;`;
+                    } else {
+                        window.location.href = `intent:${url}#Intent;action=android.intent.action.VIEW;type=video/*;end;`;
+                    }
+                } else {
+                    alert('URL de reproducción no válida.');
+                }
+            };
+
+            let cleanTitle = cleanTitleForTMDB(item.title);
+            let searchType = currentAppMode === 'series' ? 'tv' : 'movie';
+            
+            try {
+                let res = await fetch(`${TMDB_BASE_URL}/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=es-MX`);
+                let data = await res.json();
+                
+                if (data.results && data.results.length > 0) {
+                    let tmdbItem = data.results[0];
+                    
+                    document.getElementById('m-title').innerText = tmdbItem.title || tmdbItem.name || item.title;
+                    document.getElementById('m-plot').innerText = tmdbItem.overview || `Contenido disponible en la red Firenetx. Grupo: ${item.group || 'General'}`;
+                    
+                    if (tmdbItem.poster_path) {
+                        posterWrapper.innerHTML = `<img id="m-poster" src="${TMDB_IMAGE_BASE}${tmdbItem.poster_path}" onerror="handleImgError(this)">`;
+                    } else if (item.logo) {
+                        posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
+                    } else {
+                        posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${document.getElementById('m-title').innerText}</span></div>`;
+                    }
+                    
+                    if (tmdbItem.backdrop_path) {
+                        document.querySelector('.modal-content').style.backgroundImage = `linear-gradient(to right, rgba(5,5,7,1) 15%, rgba(5,5,7,0.7) 50%, rgba(5,5,7,0.2) 100%), url(${TMDB_BACKDROP_BASE}${tmdbItem.backdrop_path})`;
+                        document.querySelector('.modal-content').style.backgroundSize = 'cover';
+                        document.querySelector('.modal-content').style.backgroundPosition = 'center top';
+                    }
+
+                    let year = (tmdbItem.release_date || tmdbItem.first_air_date || '').substring(0,4);
+                    let rating = tmdbItem.vote_average ? tmdbItem.vote_average.toFixed(1) : '';
+                    let metaHTML = `<span class="smarters-badge azul" style="font-weight:900;">HQ</span>`;
+                    
+                    if(year) metaHTML += `<span class="smarters-badge">${year}</span>`;
+                    if(rating) metaHTML += `<span class="smarters-badge" style="background:#f5c518; color:#000; border:none; font-weight:800;"><i class="fas fa-star" style="font-size:11px;"></i> ${rating}</span>`;
+                    
+                    document.querySelector('.meta-data-smarters').innerHTML = metaHTML;
+                } else {
+                    document.getElementById('m-title').innerText = item.title;
+                    document.getElementById('m-plot').innerText = `Contenido disponible en la red Firenetx. Grupo: ${item.group || 'General'}`;
+                    if (item.logo) {
+                        posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
+                    } else {
+                        posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${item.title}</span></div>`;
+                    }
+                    document.querySelector('.meta-data-smarters').innerHTML = `<span class="smarters-badge azul" style="font-weight:900;">HQ</span>`;
+                }
+            } catch (error) {
+                console.error('Error TMDB Modal:', error);
+                document.getElementById('m-plot').innerText = 'No se pudo conectar a los servidores de información.';
+                document.querySelector('.meta-data-smarters').innerHTML = `<span class="smarters-badge azul" style="font-weight:900;">HQ</span>`;
+                if (item.logo) {
+                    posterWrapper.innerHTML = `<img id="m-poster" src="${item.logo}" onerror="handleImgError(this)">`;
+                } else {
+                    posterWrapper.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${item.title}</span></div>`;
+                }
+            }
+            
+            setTimeout(() => {
+                document.getElementById('m-play-btn').focus();
+            }, 100);
         }
 
-        function handleImgError(img) {
-            img.onerror = null;
-            img.src = 'https://via.placeholder.com/320x480?text=Sin+Poster';
-        }
-
+        // === FUNCIONES MODALES GLOBALES Y EDITOR ===
         function closeModals() {
-            document.querySelectorAll('.modal-overlay').forEach(modal => {
-                modal.style.display = 'none';
-            });
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+            document.querySelector('.modal-content').style.backgroundImage = 'none';
         }
 
         function closeEditorModal() {
             document.getElementById('playlist-editor-modal').style.display = 'none';
         }
-        
-        function openItemEditorModal(catName, idx) {
-            document.getElementById('item-editor-modal').style.display = 'flex';
-        }
-        
+
         function closeItemEditor() {
             document.getElementById('item-editor-modal').style.display = 'none';
         }
-        
-        function saveItemEdit() {
-            // Lógica de guardado...
+
+        function handleImgError(img) {
+            img.onerror = null;
+            let parent = img.parentNode;
+            let title = document.getElementById('m-title') ? document.getElementById('m-title').innerText : 'Contenido';
+            parent.innerHTML = `<div class="neon-channel-box" style="aspect-ratio: 2/3;"><span class="neon-channel-text" style="font-size: 20px;">${title}</span></div>`;
+        }
+
+        function openItemEditorModal(cat, idx) {
+            let item = parsedM3U[cat][idx];
+            document.getElementById('item-title').value = item.title;
+            document.getElementById('item-logo').value = item.logo || '';
+            document.getElementById('item-url').value = item.url;
+            document.getElementById('item-original-cat').value = cat;
+            document.getElementById('item-original-idx').value = idx;
+            document.getElementById('item-editor-modal').style.display = 'flex';
+        }
+
+        async function saveItemEdit() {
+            let cat = document.getElementById('item-original-cat').value;
+            let idx = document.getElementById('item-original-idx').value;
+            parsedM3U[cat][idx].title = document.getElementById('item-title').value;
+            parsedM3U[cat][idx].logo = document.getElementById('item-logo').value;
+            parsedM3U[cat][idx].url = document.getElementById('item-url').value;
             closeItemEditor();
+            await saveM3UState();
+            renderGridItems(cat);
         }
-        
-        function deleteItem(catName, idx) {
-            if (confirm("¿Eliminar elemento?")) {
-                // Lógica para borrar elemento...
+
+        async function deleteItem(cat, idx) {
+            if(confirm("¿Estás seguro de que deseas eliminar este elemento?")) {
+                parsedM3U[cat].splice(idx, 1);
+                await saveM3UState();
+                renderGridItems(cat);
             }
         }
-        
-        function deleteList(id) {
-            if (confirm("¿Eliminar lista completa de la nube?")) {
-                deleteListFromDB(id).then(() => {
-                    renderPlaylistsFolders(currentAppMode);
-                });
+
+        async function deleteList(id) {
+            if(confirm("¿Estás seguro de que deseas eliminar esta lista completamente de la base de datos?")) {
+                await deleteListFromDB(id);
+                renderPlaylistsFolders(currentAppMode);
             }
         }
+
     </script>
 </body>
 </html>
-
 
