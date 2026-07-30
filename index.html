@@ -49,6 +49,11 @@
             font-family: 'Montserrat', sans-serif; 
         }
         
+        /* FIX GLOBAL FOCUS D-PAD: Resaltar los elementos en focus general si no tienen estilo propio */
+        [tabindex]:focus, button:focus, input:focus, select:focus, textarea:focus {
+            outline: none;
+        }
+
         body {
             margin: 0; padding: 0;
             background-color: var(--netflix-black);
@@ -230,7 +235,7 @@
             border-top: 1px solid var(--glass-border);
             border-right: 1px solid var(--glass-border);
             border-bottom: 1px solid var(--glass-border);
-            box-shadow: inset 15px 0 20px -10px rgba(0, 243, 255, 0.2); 
+            box-shadow: inset 15px 0 20px -10px rgba(0, 243, 255, 0.2), 0 0 15px rgba(0,243,255,0.3); 
             transform: translateX(5px); 
         }
         .smarters-cat-btn:focus i:not(.fa-edit, .fa-trash), .smarters-cat-btn.active i:not(.fa-edit, .fa-trash), .smarters-cat-btn:hover i:not(.fa-edit, .fa-trash) { 
@@ -279,6 +284,7 @@
         .device-code-display:hover, .device-code-display:focus {
             background: rgba(0, 243, 255, 0.1);
             transform: scale(1.02);
+            border: 2px solid var(--netflix-red);
         }
         
         #display-device-code {
@@ -323,6 +329,7 @@
         }
         .brand-logo:focus, .brand-logo:hover {
             color: var(--netflix-red);
+            box-shadow: 0 0 15px rgba(0,243,255,0.4);
         }
         .nav-links { display: flex; gap: 15px; }
         .nav-link, .nav-btn-float { 
@@ -349,7 +356,7 @@
             width: 100% !important; justify-content: center; transition: var(--transition);
             box-shadow: 0 4px 15px rgba(0, 243, 255, 0.3);
         }
-        .btn-netflix-play-mini:focus, .btn-netflix-play-mini:hover { box-shadow: var(--neon-glow); transform: scale(1.03); }
+        .btn-netflix-play-mini:focus, .btn-netflix-play-mini:hover { box-shadow: var(--neon-glow); transform: scale(1.03); border: 2px solid #fff !important; }
         
         .btn-netflix-back {
             background-color: rgba(255,255,255,0.05) !important; color: #fff !important; border: 1px solid var(--glass-border) !important; 
@@ -378,24 +385,95 @@
                         linear-gradient(to top, #050507 0%, rgba(5,5,7,0.2) 50%, transparent 100%);
             z-index: 2;
         }
-        .home-floating-menu { position: absolute; left: 40px; top: 40%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; z-index: 10; }
         
-        .float-btn {
-            background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 14px 22px; border-radius: 12px;
-            font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 15px; width: 200px;
-            transition: var(--transition); backdrop-filter: blur(10px); text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        .float-btn i { font-size: 18px; color: var(--netflix-red); width: 20px; transition: var(--transition); }
-        .float-btn:focus, .float-btn:hover { 
-            background: rgba(0, 243, 255, 0.1); border-color: var(--netflix-red); 
-            box-shadow: var(--neon-glow); transform: translateX(10px); 
+        /* --- NUEVOS BOTONES VENTANA HOME --- */
+        .home-floating-menu { 
+            position: absolute; 
+            left: 40px; 
+            top: 45%; 
+            transform: translateY(-50%); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            z-index: 10; 
         }
         
-        .home-info-container { position: absolute; left: 280px; top: 32%; transform: translateY(-50%); z-index: 10; max-width: 50%; text-shadow: 0 4px 15px rgba(0,0,0,1); }
+        .home-window-btn {
+            position: relative;
+            width: 280px;
+            height: 120px;
+            background-color: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+            text-align: left;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            background-size: cover;
+            background-position: center;
+            transition: var(--transition);
+            overflow: hidden;
+        }
+        
+        .home-window-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(5,5,7,0.95) 0%, rgba(5,5,7,0.4) 50%, rgba(0,0,0,0.1) 100%);
+            z-index: 1;
+            transition: var(--transition);
+        }
+        
+        .home-window-btn:focus, .home-window-btn:hover {
+            transform: scale(1.05) translateX(10px);
+            border-color: var(--netflix-red);
+            box-shadow: var(--neon-glow);
+            z-index: 10;
+        }
+        
+        .home-window-btn:focus::before, .home-window-btn:hover::before {
+            background: linear-gradient(to top, rgba(0, 243, 255, 0.8) 0%, rgba(5,5,7,0.4) 60%, rgba(0,0,0,0.1) 100%);
+        }
+        
+        .home-window-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .home-window-content i {
+            font-size: 26px;
+            color: var(--netflix-red);
+            transition: var(--transition);
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        
+        .home-window-btn:focus .home-window-content i, 
+        .home-window-btn:hover .home-window-content i {
+            color: #fff;
+            text-shadow: var(--neon-glow);
+        }
+        
+        .home-window-content span {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(0,0,0,1);
+        }
+        
+        .home-info-container { position: absolute; left: 360px; top: 32%; transform: translateY(-50%); z-index: 10; max-width: 50%; text-shadow: 0 4px 15px rgba(0,0,0,1); }
         .home-info-container h1 { font-size: 42px; font-weight: 900; margin: 0 0 15px 0; line-height: 1.1; letter-spacing: -1px; text-transform: uppercase; text-shadow: var(--neon-glow); }
         .home-info-container p { font-size: 16px; color: #cbd5e1; margin: 0; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-weight: 300; }
         
-        .home-carousel-container { position: absolute; bottom: 25px; left: 280px; right: 30px; z-index: 10; }
+        .home-carousel-container { position: absolute; bottom: 25px; left: 360px; right: 30px; z-index: 10; }
         .home-carousel { display: flex; gap: 15px; overflow-x: auto; padding: 10px 5px 25px 5px; scroll-behavior: smooth; }
         .home-carousel::-webkit-scrollbar { display: none; }
         
@@ -420,7 +498,7 @@
         .live-card { aspect-ratio: 16/9 !important; }
         
         .movie-card:focus, .movie-card:hover { 
-            transform: translateY(-8px) scale(1.04); border: 1px solid var(--netflix-red) !important; 
+            transform: translateY(-8px) scale(1.04); border: 2px solid var(--netflix-red) !important; 
             box-shadow: var(--neon-glow); z-index: 10; 
         }
         .movie-card img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
@@ -566,7 +644,7 @@
             <h1>VINCULAR DISPOSITIVO</h1>
             <div class="help-tip" style="justify-content: center;"><i class="fas fa-satellite-dish"></i> Proporciona este código a tu proveedor</div>
             
-            <div class="device-code-display" id="device-code-box" onclick="forceResetCode()" title="Haz clic para generar un nuevo código">
+            <div class="device-code-display nav-item" tabindex="0" id="device-code-box" onclick="forceResetCode()" title="Haz clic para generar un nuevo código">
                 <span id="display-device-code">------</span>
             </div>
 
@@ -660,9 +738,24 @@
         <div id="home-bg" class="home-hero-bg"></div>
         <div class="home-hero-overlay"></div>
         <div class="home-floating-menu">
-            <button class="nav-item float-btn" onclick="changeMode('movie')"><i class="fas fa-film"></i> Base Películas</button>
-            <button class="nav-item float-btn" onclick="changeMode('series')"><i class="fas fa-tv"></i> Base Series</button>
-            <button class="nav-item float-btn" onclick="changeMode('live')"><i class="fas fa-satellite-dish"></i> Red TV Vivo</button>
+            <button class="nav-item home-window-btn" onclick="changeMode('movie')" style="background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop');">
+                <div class="home-window-content">
+                    <i class="fas fa-film"></i>
+                    <span>Base Películas</span>
+                </div>
+            </button>
+            <button class="nav-item home-window-btn" onclick="changeMode('series')" style="background-image: url('https://images.unsplash.com/photo-1552820728-8b83bb6b773f?q=80&w=800&auto=format&fit=crop');">
+                <div class="home-window-content">
+                    <i class="fas fa-tv"></i>
+                    <span>Base Series</span>
+                </div>
+            </button>
+            <button class="nav-item home-window-btn" onclick="changeMode('live')" style="background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=800&auto=format&fit=crop');">
+                <div class="home-window-content">
+                    <i class="fas fa-satellite-dish"></i>
+                    <span>Red TV Vivo</span>
+                </div>
+            </button>
         </div>
         <div class="home-info-container">
             <h1 id="home-title">Cargando Plataformas...</h1>
@@ -710,7 +803,100 @@
 
     <!-- SCRIPTS LÓGICOS -->
     <script>
-        // Animación de Intro (se oculta al inicio)
+        // === NAVEGACIÓN GLOBAL D-PAD TV (SPATIAL NAVIGATION) ===
+        document.addEventListener('keydown', function(e) {
+            const key = e.key || e.keyCode;
+            const isUp = key === 'ArrowUp' || key === 38;
+            const isDown = key === 'ArrowDown' || key === 40;
+            const isLeft = key === 'ArrowLeft' || key === 37;
+            const isRight = key === 'ArrowRight' || key === 39;
+            const isEnter = key === 'Enter' || key === 13;
+
+            if (isEnter) {
+                let active = document.activeElement;
+                if (active && active.tagName !== 'BUTTON' && active.tagName !== 'INPUT' && active.tagName !== 'A' && active.tagName !== 'SELECT' && active.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    active.click();
+                }
+                return;
+            }
+
+            if (!isUp && !isDown && !isLeft && !isRight) return;
+
+            e.preventDefault(); 
+            
+            const selectors = '.nav-item, button, input, select, textarea, [tabindex="0"], .movie-card, .smarters-cat-btn, .carousel-item, .home-window-btn, .device-code-display, .editor-btn';
+            
+            let focusables = [];
+            let activeModal = document.querySelector('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"]');
+            
+            if (activeModal) {
+                focusables = Array.from(activeModal.querySelectorAll(selectors));
+            } else {
+                focusables = Array.from(document.querySelectorAll(selectors)).filter(el => {
+                    let modalPadre = el.closest('.modal-overlay');
+                    if (modalPadre && window.getComputedStyle(modalPadre).display === 'none') return false;
+                    return true;
+                });
+            }
+
+            focusables = focusables.filter(el => {
+                const rect = el.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== 'hidden';
+            });
+
+            let current = document.activeElement;
+            
+            if (!focusables.includes(current)) {
+                if (focusables.length > 0) focusables[0].focus();
+                return;
+            }
+
+            const currentRect = current.getBoundingClientRect();
+            const currCx = currentRect.left + currentRect.width / 2;
+            const currCy = currentRect.top + currentRect.height / 2;
+
+            let bestDistance = Infinity;
+            let nextElement = null;
+
+            focusables.forEach(candidate => {
+                if (candidate === current) return;
+                const rect = candidate.getBoundingClientRect();
+                const candCx = rect.left + rect.width / 2;
+                const candCy = rect.top + rect.height / 2;
+
+                let valid = false;
+                let dist = 0;
+
+                if (isUp && candCy < currCy) { valid = true; }
+                else if (isDown && candCy > currCy) { valid = true; }
+                else if (isLeft && candCx < currCx) { valid = true; }
+                else if (isRight && candCx > currCx) { valid = true; }
+
+                if (valid) {
+                    let dx = currCx - candCx;
+                    let dy = currCy - candCy;
+                    
+                    if (isUp || isDown) {
+                        dist = Math.abs(dy) + Math.abs(dx) * 3;
+                    } else {
+                        dist = Math.abs(dx) + Math.abs(dy) * 3;
+                    }
+
+                    if (dist < bestDistance) {
+                        bestDistance = dist;
+                        nextElement = candidate;
+                    }
+                }
+            });
+
+            if (nextElement) {
+                nextElement.focus();
+                nextElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+        });
+
+        // Animación de Intro
         setTimeout(() => {
             const intro = document.getElementById('intro-screen');
             if (intro) {
@@ -802,7 +988,6 @@
         let accessGranted = false;
         let hasEnteredApp = false; 
 
-        // ESTADO VISUAL DE RED
         database.ref('.info/connected').on('value', function(snap) {
             const statusTxt = document.getElementById('connection-status-text');
             const codeBox = document.getElementById('device-code-box');
@@ -836,7 +1021,6 @@
                 
                 let expirationField = data.vencimiento || data.expiracion || data.fecha_vencimiento || data.expiration || data.fecha;
                 
-                // ---- LÓGICA DE TRADUCCIÓN DE FECHA CORREGIDA ----
                 if (expirationField) {
                     let expDate = new Date(expirationField);
                     
@@ -910,7 +1094,6 @@
                                 document.getElementById('login').style.display = 'none';
                                 document.getElementById('main-nav').style.display = 'flex';
                                 changeMode('home');
-                                loadTMDBHome();
                             } catch(domErr) {
                                 console.error("Error UI render:", domErr);
                             }
@@ -1109,6 +1292,14 @@
             currentAppMode = mode;
             currentActiveList = null; 
             
+            // --- OCULTAR NAV LINKS EN HOME, MOSTRAR EN LOS DEMÁS ---
+            const navLinksContainer = document.getElementById('nav-content-links');
+            if (mode === 'home') {
+                navLinksContainer.style.display = 'none';
+            } else {
+                navLinksContainer.style.display = 'flex';
+            }
+
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             const activeNav = Array.from(document.querySelectorAll('.nav-link')).find(btn => {
                 let txt = btn.innerText.toLowerCase();
@@ -1147,6 +1338,7 @@
             if (isEditorMode) {
                 let addBtn = document.createElement('div');
                 addBtn.className = 'movie-card fallback-card add-list-card nav-item';
+                addBtn.setAttribute('tabindex', '0');
                 addBtn.innerHTML = '<i class="fas fa-plus fa-3x" style="color:var(--netflix-red);margin-bottom:10px;"></i><span>AGREGAR LISTA</span>';
                 
                 addBtn.onclick = () => { 
@@ -1172,6 +1364,7 @@
                 
                 let card = document.createElement('div');
                 card.className = 'movie-card fallback-card nav-item';
+                card.setAttribute('tabindex', '0');
                 card.innerHTML = `<i class="fas fa-folder fa-3x" style="color:var(--netflix-red);margin-bottom:10px;"></i>
                                   <span style="padding:0 10px;">${list.name}</span>
                                   ${list.hidden ? '<i class="fas fa-eye-slash" style="position:absolute;top:10px;right:10px;color:#fff;"></i>' : ''}`;
@@ -1180,7 +1373,7 @@
                 if (isEditorMode) {
                     let controls = document.createElement('div');
                     controls.className = 'editor-controls';
-                    controls.innerHTML = `<button class="editor-btn delete" onclick="event.stopPropagation(); deleteList('${list.id}')"><i class="fas fa-trash"></i></button>`;
+                    controls.innerHTML = `<button class="editor-btn delete" tabindex="0" onclick="event.stopPropagation(); deleteList('${list.id}')"><i class="fas fa-trash"></i></button>`;
                     card.appendChild(controls);
                 }
                 grid.appendChild(card);
@@ -1257,6 +1450,7 @@
 
             let backBtn = document.createElement('button');
             backBtn.className = 'smarters-cat-btn';
+            backBtn.setAttribute('tabindex', '0');
             backBtn.style.marginBottom = '15px';
             backBtn.style.borderColor = 'var(--netflix-red)';
             backBtn.innerHTML = `<div class="cat-info"><i class="fas fa-arrow-left"></i> <span>Volver a Listas</span></div>`;
@@ -1273,7 +1467,8 @@
             categories.forEach((cat, index) => {
                 let count = parsedM3U[cat].length;
                 let btn = document.createElement('button');
-                btn.className = `smarters-cat-btn ${index === 0 ? 'active' : ''}`;
+                btn.className = `smarters-cat-btn ${index === 0 ? 'active' : ''} nav-item`;
+                btn.setAttribute('tabindex', '0');
                 btn.innerHTML = `<div class="cat-info"><i class="fas fa-folder-open"></i> <span>${cat}</span></div><span class="cat-count">${count}</span>`;
                 btn.onclick = () => {
                     document.querySelectorAll('.smarters-cat-btn').forEach(b => b.classList.remove('active'));
@@ -1288,7 +1483,6 @@
             }
         }
 
-        // RENDERIZADO DE CANALES Y LÓGICA DE REPRODUCCIÓN
         function renderGridItems(catName) {
             const grid = document.getElementById('main-content-grid');
             grid.innerHTML = '';
@@ -1303,11 +1497,11 @@
             items.forEach((item, idx) => {
                 let card = document.createElement('div');
                 card.className = `movie-card nav-item ${currentAppMode === 'live' ? 'live-card' : ''}`;
+                card.setAttribute('tabindex', '0');
                 
                 let safeTitle = (item.title || 'CANAL NEON').replace(/'/g, "&#39;");
 
                 if (currentAppMode === 'live') {
-                    // CANALES: DISEÑO EXCLUSIVO NEÓN CON LETRAS TIPO IMAGEN SIN LOGO
                     card.innerHTML = `
                         <div class="neon-channel-box">
                             <span class="neon-channel-text">${safeTitle}</span>
@@ -1331,7 +1525,6 @@
                     }
                 }
 
-                // Lógica principal solicitada: si es 'live' reproduce sin sinopsis, de lo contrario abre modal
                 card.onclick = () => {
                     if (currentAppMode === 'live') {
                         if (item.url) {
@@ -1358,8 +1551,8 @@
                     let controls = document.createElement('div');
                     controls.className = 'editor-controls';
                     controls.innerHTML = `
-                        <button class="editor-btn" onclick="event.stopPropagation(); openItemEditorModal('${catName}', ${idx})"><i class="fas fa-edit"></i></button>
-                        <button class="editor-btn delete" onclick="event.stopPropagation(); deleteItem('${catName}', ${idx})"><i class="fas fa-trash"></i></button>
+                        <button class="editor-btn" tabindex="0" onclick="event.stopPropagation(); openItemEditorModal('${catName}', ${idx})"><i class="fas fa-edit"></i></button>
+                        <button class="editor-btn delete" tabindex="0" onclick="event.stopPropagation(); deleteItem('${catName}', ${idx})"><i class="fas fa-trash"></i></button>
                     `;
                     card.appendChild(controls);
                 }
@@ -1400,6 +1593,7 @@
             };
 
             document.getElementById('modal-info').style.display = 'flex';
+            setTimeout(() => playBtn.focus(), 100); 
         }
 
         function openItemEditorModal(cat, idx) {
@@ -1447,24 +1641,17 @@
             }
         }
 
-        function closeEditorModal() { 
-            document.getElementById('playlist-editor-modal').style.display = 'none'; 
-        }
-
-        function closeItemEditor() { 
-            document.getElementById('item-editor-modal').style.display = 'none'; 
-        }
-
-        function closeModals() { 
-            document.getElementById('modal-info').style.display = 'none'; 
-        }
-
+        function closeEditorModal() { document.getElementById('playlist-editor-modal').style.display = 'none'; }
+        function closeItemEditor() { document.getElementById('item-editor-modal').style.display = 'none'; }
+        function closeModals() { document.getElementById('modal-info').style.display = 'none'; }
         function handleImgError(img) { 
             img.onerror = null;
             img.parentNode.innerHTML = '<div class="neon-channel-box"><span class="neon-channel-text">FIRENETX</span></div>';
         }
 
-        // --- CATÁLOGO DE PLATAFORMAS EN ALTA DEFINICIÓN ---
+        // --- CATÁLOGO DE PLATAFORMAS CON LOGOS Y AUTOMATIZACIÓN ---
+        let homeCarouselInterval;
+
         function loadTMDBHome() {
             const titleEl = document.getElementById('home-title');
             const plotEl = document.getElementById('home-plot');
@@ -1473,108 +1660,73 @@
 
             if (!carousel) return;
             carousel.innerHTML = '';
+            
+            if (homeCarouselInterval) {
+                clearInterval(homeCarouselInterval);
+            }
 
-            // Definición de tarjetas de plataformas exclusivas y en alta calidad.
             const items = [
                 {
                     title: "NETFLIX",
                     plot: "Series y películas exclusivas. Disfruta del mejor contenido original de la plataforma número uno del mundo.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/56v2KjBlU4XaDP9CEFCVWf8qp2j.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg"
+                    backdrop: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1920&auto=format&fit=crop",
+                    poster: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg"
                 },
                 {
                     title: "DISNEY+",
                     plot: "La magia de Disney, Pixar, Marvel, Star Wars y National Geographic reunida en un solo lugar.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/sjx6zjQI2dLGtEL0HcA76smYb5v.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg"
+                    backdrop: "https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?q=80&w=1920&auto=format&fit=crop",
+                    poster: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg"
                 },
                 {
-                    title: "HBO MAX",
+                    title: "MAX",
                     plot: "Disfruta de los estrenos mundiales de Warner Bros, DC, Cartoon Network y los aclamados originales de HBO.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/uDgy6hyPd82kRVc6EQH3m2qQ61A.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/aBLLUX0E21vWjWk5BvKj8Kz2wK0.jpg"
+                    backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1920&auto=format&fit=crop",
+                    poster: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg"
                 },
                 {
                     title: "FOX SPORTS",
                     plot: "La pasión del deporte en vivo. Fútbol internacional, automovilismo, artes marciales mixtas y eventos premium.",
-                    backdrop: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1280&auto=format&fit=crop",
-                    poster: "https://images.unsplash.com/photo-1508344928928-7137b29de218?q=80&w=500&auto=format&fit=crop"
+                    backdrop: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1920&auto=format&fit=crop",
+                    poster: "https://upload.wikimedia.org/wikipedia/commons/0/02/Fox_Sports_logo.svg"
                 },
                 {
                     title: "PRIME VIDEO",
                     plot: "Producciones originales y galardonadas, películas exitosas y canales premium seleccionados para ti.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/mSTSmx2AUMYcEayOEI4z2L8K73O.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/7Ns6tOqsTpuJUzewywEPJ8mE52E.jpg"
+                    backdrop: "https://images.unsplash.com/photo-1588694086422-921d7b309f45?q=80&w=1920&auto=format&fit=crop",
+                    poster: "https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg"
                 },
                 {
                     title: "STAR+",
                     plot: "Deportes en vivo con ESPN, comedias animadas, películas exitosas y series exclusivas de entretenimiento general.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/uO3xEEH4L0W1vE45Fz3hA5Q6uI2.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/vHGE4tue3ebL0XvWWfQc3v9tD0R.jpg"
-                },
-                {
-                    title: "APPLE TV+",
-                    plot: "Historias originales, películas increíbles y documentales fascinantes de las mentes más creativas de Hollywood.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/xZUZ9i6vVayjyhR1vRo9Bjku4h.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/lC2hQ8h058N0vLdtsG0T2O3pIfp.jpg"
-                },
-                {
-                    title: "CRUNCHYROLL",
-                    plot: "El catálogo de anime más grande del mundo. Mira los episodios de estreno directo desde Japón.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/yF1eOkaYvwiORauRCPWznV9xVvi.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/nTvM4mhqNlHIvUkI1gVnW6XP7GG.jpg"
-                },
-                {
-                    title: "PARAMOUNT+",
-                    plot: "Una montaña de entretenimiento. Descubre franquicias globales, los mejores realities y el universo de Star Trek.",
-                    backdrop: "https://image.tmdb.org/t/p/w1280/1R68vl3d5s86JsS2NPjl8UoMqIS.jpg",
-                    poster: "https://image.tmdb.org/t/p/w500/nJUHX3XL1jIkk2alLeZsqDqdENz.jpg"
-                },
-                {
-                    title: "VIX PREMIUM",
-                    plot: "El mejor contenido en español. Cientos de novelas, series originales, comedias y el fútbol de tu pasión.",
-                    backdrop: "https://images.unsplash.com/photo-1616469829581-73993eb86b02?q=80&w=1280&auto=format&fit=crop",
-                    poster: "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=500&auto=format&fit=crop"
+                    backdrop: "https://images.unsplash.com/photo-1518605363460-e8f001552e46?q=80&w=1920&auto=format&fit=crop",
+                    poster: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Star%2B_logo.svg"
                 }
             ];
-
-            if (items.length > 0) {
+            
+            items.forEach((item) => {
+                let div = document.createElement('div');
+                div.className = 'carousel-item nav-item';
+                div.setAttribute('tabindex', '0');
+                div.innerHTML = `<img src="${item.poster}" alt="${item.title}" style="object-fit:contain; padding:20px; background:rgba(0,0,0,0.5);">`;
+                
+                // Actualiza Hero Image on focus/hover
+                div.onfocus = div.onmouseenter = () => {
+                    titleEl.innerText = item.title;
+                    plotEl.innerText = item.plot;
+                    bgEl.style.backgroundImage = `url('${item.backdrop}')`;
+                };
+                carousel.appendChild(div);
+            });
+            
+            // Background inicial por defecto
+            if(items.length > 0) {
                 titleEl.innerText = items[0].title;
                 plotEl.innerText = items[0].plot;
                 bgEl.style.backgroundImage = `url('${items[0].backdrop}')`;
             }
-
-            items.forEach((item, idx) => {
-                let div = document.createElement('div');
-                div.className = 'carousel-item nav-item';
-                if (idx === 0) {
-                    div.style.border = '2px solid var(--netflix-red)';
-                    div.style.boxShadow = 'var(--neon-glow)';
-                }
-
-                div.innerHTML = `
-                    <img src="${item.poster}" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/300x450/050507/00f3ff.png?text=${encodeURIComponent(item.title)}';">
-                    <div class="card-title-container">
-                        <span class="card-title-text">${item.title}</span>
-                    </div>
-                `;
-
-                div.onclick = () => {
-                    titleEl.innerText = item.title;
-                    plotEl.innerText = item.plot;
-                    bgEl.style.backgroundImage = `url('${item.backdrop}')`;
-                    document.querySelectorAll('#home-carousel .carousel-item').forEach(c => {
-                        c.style.border = '1px solid var(--glass-border)';
-                        c.style.boxShadow = 'none';
-                    });
-                    div.style.border = '2px solid var(--netflix-red)';
-                    div.style.boxShadow = 'var(--neon-glow)';
-                };
-                carousel.appendChild(div);
-            });
         }
     </script>
 </body>
 </html>
-
 
