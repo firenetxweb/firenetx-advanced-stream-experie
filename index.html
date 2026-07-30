@@ -49,7 +49,7 @@
             font-family: 'Montserrat', sans-serif; 
         }
         
-        /* FIX GLOBAL FOCUS D-PAD: Resaltar los elementos en focus general si no tienen estilo propio */
+        /* FIX GLOBAL FOCUS D-PAD */
         [tabindex]:focus, button:focus, input:focus, select:focus, textarea:focus {
             outline: none;
         }
@@ -547,6 +547,31 @@
         .editor-btn.delete:focus, .editor-btn.delete:hover { background: #ff0055; color: white; border-color: #ff0055; box-shadow: 0 0 15px #ff0055; }
         .add-list-card { border: 2px dashed var(--netflix-red); background: rgba(0, 243, 255, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .add-list-card:focus, .add-list-card:hover { background: rgba(0, 243, 255, 0.15); border-style: solid; }
+
+        /* BOTÓN FLOTANTE MODO EDITOR INICIO */
+        .home-editor-trigger {
+            position: absolute;
+            top: 25px;
+            right: 40px;
+            z-index: 20;
+            background: rgba(188, 19, 254, 0.3);
+            border: 1px solid var(--neon-red);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--neon-glow-alt);
+            transition: var(--transition);
+            display: none;
+        }
+        .home-editor-trigger:focus, .home-editor-trigger:hover {
+            background: var(--neon-red);
+            color: #fff;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -573,7 +598,6 @@
             <h1>VINCULAR DISPOSITIVO</h1>
             <div class="help-tip" style="justify-content: center;"><i class="fas fa-satellite-dish"></i> Proporciona este código a tu proveedor</div>
             
-            <!-- Se agregó tabindex="0" y nav-item -->
             <div class="device-code-display nav-item" tabindex="0" id="device-code-box" onclick="forceResetCode()" title="Haz clic para generar un nuevo código">
                 <span id="display-device-code">------</span>
             </div>
@@ -646,10 +670,52 @@
         </div>
     </div>
 
+    <!-- MODAL EDITOR INICIO & SLIDER -->
+    <div id="home-editor-modal" class="modal-overlay" style="z-index: 60000; display: none;">
+        <div class="admin-box" style="margin:auto; display:flex; flex-direction:column; background:var(--glass-bg);">
+            <h2><i class="fas fa-sliders-h"></i> Editar Sección Inicio</h2>
+            
+            <h3 style="color:var(--netflix-red); font-size:14px; margin:5px 0 -5px 0;">IMAGEN DE FONDO DE INICIO</h3>
+            <label style="color:var(--grey); font-size:12px;">URL de la Imagen de Fondo Principal</label>
+            <input type="text" id="home-custom-bg-input" placeholder="https://ruta-de-la-imagen-fondo.jpg" class="nav-item">
+            <button class="btn-red nav-item" style="background: var(--netflix-red); border:none; padding: 10px; border-radius: 8px; font-weight: 700; cursor:pointer;" onclick="saveCustomHomeBg()">GUARDAR FONDO PRINCIPAL</button>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
+
+            <h3 style="color:var(--netflix-red); font-size:14px; margin:0;">CARRUSEL SLIDER DE INICIO</h3>
+            
+            <select id="home-slide-selector" class="nav-item" onchange="loadHomeSlideDataForEdit()">
+                <option value="new">+ AGREGAR NUEVO SLIDE</option>
+            </select>
+
+            <label style="color:var(--grey); font-size:12px; margin-bottom:-10px;">Título del Slide</label>
+            <input type="text" id="slide-title-input" placeholder="Ej. NETFLIX" class="nav-item">
+
+            <label style="color:var(--grey); font-size:12px; margin-bottom:-10px;">Descripción / SINOPSIS</label>
+            <textarea id="slide-plot-input" placeholder="Descripción del contenido..." style="height:60px;" class="nav-item"></textarea>
+
+            <label style="color:var(--grey); font-size:12px; margin-bottom:-10px;">URL Imagen Fondo (Backdrop)</label>
+            <input type="text" id="slide-backdrop-input" placeholder="https://imagen-fondo-slide.jpg" class="nav-item">
+
+            <label style="color:var(--grey); font-size:12px; margin-bottom:-10px;">URL Logo / Póster Carrusel</label>
+            <input type="text" id="slide-poster-input" placeholder="https://imagen-logo-slide.svg" class="nav-item">
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-red nav-item" style="flex:1; background: var(--neon-yellow); color:#000; border:none; padding: 12px; border-radius: 8px; font-weight: 700; cursor:pointer;" onclick="saveHomeSlide()">GUARDAR SLIDE</button>
+                <button id="btn-delete-slide" class="btn-red nav-item" style="flex:1; background: #ff0055; color:#fff; border:none; padding: 12px; border-radius: 8px; font-weight: 700; cursor:pointer; display:none;" onclick="deleteHomeSlide()">ELIMINAR SLIDE</button>
+            </div>
+
+            <div style="margin-top:15px;">
+                <button class="btn-netflix-back nav-item" style="width:100%;" onclick="closeHomeEditorModal()">CERRAR EDITOR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- NAVBAR PRINCIPAL -->
     <nav class="navbar" id="main-nav" style="display:none;">
         <div class="navbar-left">
             <div class="brand-logo nav-item" tabindex="0" onclick="secretLogoClick()">FIRENETX</div>
+            <!-- SECCIÓN DE ENLACES: Se ocultará dinámicamente en Inicio -->
             <div class="nav-links" id="nav-content-links">
                 <button class="nav-link nav-item active" onclick="changeMode('home')">Inicio</button>
                 <button class="nav-link nav-item" onclick="changeMode('movie')">Películas</button>
@@ -665,6 +731,7 @@
 
     <!-- HOME SECTION -->
     <section id="home-section">
+        <button id="home-editor-btn" class="home-editor-trigger nav-item" onclick="openHomeEditorModal()"><i class="fas fa-edit"></i> EDITAR INICIO & CARROUSEL</button>
         <div id="home-bg" class="home-hero-bg"></div>
         <div class="home-hero-overlay"></div>
         <div class="home-floating-menu">
@@ -727,7 +794,6 @@
             const isRight = key === 'ArrowRight' || key === 39;
             const isEnter = key === 'Enter' || key === 13;
 
-            // Manejo de la tecla ENTER para divs que fungen como botones (ej. movie-card)
             if (isEnter) {
                 let active = document.activeElement;
                 if (active && active.tagName !== 'BUTTON' && active.tagName !== 'INPUT' && active.tagName !== 'A' && active.tagName !== 'SELECT' && active.tagName !== 'TEXTAREA') {
@@ -739,20 +805,16 @@
 
             if (!isUp && !isDown && !isLeft && !isRight) return;
 
-            e.preventDefault(); // Evitar scroll de la página al usar flechas
+            e.preventDefault();
             
-            // Definir selectores enfocables
             const selectors = '.nav-item, button, input, select, textarea, [tabindex="0"], .movie-card, .smarters-cat-btn, .carousel-item, .float-btn, .device-code-display, .editor-btn';
             
-            // Detectar si hay un modal activo superpuesto
             let focusables = [];
             let activeModal = document.querySelector('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"]');
             
             if (activeModal) {
-                // Limitar el enfoque solo a lo que está en el modal
                 focusables = Array.from(activeModal.querySelectorAll(selectors));
             } else {
-                // Traer todos pero descartar los que estén dentro de modales ocultos u ocultos globalmente
                 focusables = Array.from(document.querySelectorAll(selectors)).filter(el => {
                     let modalPadre = el.closest('.modal-overlay');
                     if (modalPadre && window.getComputedStyle(modalPadre).display === 'none') return false;
@@ -760,7 +822,6 @@
                 });
             }
 
-            // Filtrar los que no están visibles realmente
             focusables = focusables.filter(el => {
                 const rect = el.getBoundingClientRect();
                 return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== 'hidden';
@@ -789,7 +850,6 @@
                 let valid = false;
                 let dist = 0;
 
-                // Chequeo direccional simple utilizando los centros
                 if (isUp && candCy < currCy) { valid = true; }
                 else if (isDown && candCy > currCy) { valid = true; }
                 else if (isLeft && candCx < currCx) { valid = true; }
@@ -799,7 +859,6 @@
                     let dx = currCx - candCx;
                     let dy = currCy - candCy;
                     
-                    // Penalizar distancias transversales para preferir líneas rectas
                     if (isUp || isDown) {
                         dist = Math.abs(dy) + Math.abs(dx) * 3;
                     } else {
@@ -819,7 +878,6 @@
             }
         });
 
-        // Animación de Intro (se oculta al inicio)
         setTimeout(() => {
             const intro = document.getElementById('intro-screen');
             if (intro) {
@@ -911,7 +969,6 @@
         let accessGranted = false;
         let hasEnteredApp = false; 
 
-        // ESTADO VISUAL DE RED
         database.ref('.info/connected').on('value', function(snap) {
             const statusTxt = document.getElementById('connection-status-text');
             const codeBox = document.getElementById('device-code-box');
@@ -945,7 +1002,6 @@
                 
                 let expirationField = data.vencimiento || data.expiracion || data.fecha_vencimiento || data.expiration || data.fecha;
                 
-                // ---- LÓGICA DE TRADUCCIÓN DE FECHA CORREGIDA ----
                 if (expirationField) {
                     let expDate = new Date(expirationField);
                     
@@ -1076,6 +1132,10 @@
                 if (clave === "masteredit") {
                     isEditorMode = !isEditorMode;
                     alert(isEditorMode ? "MODO EDITOR ACTIVADO.\nAhora puedes agregar, editar listas y modificar contenido libremente." : "MODO EDITOR DESACTIVADO.");
+                    
+                    // Mostrar u ocultar botón de editor en inicio
+                    document.getElementById('home-editor-btn').style.display = isEditorMode ? 'block' : 'none';
+
                     if (currentAppMode && currentAppMode !== 'home') {
                         if (currentActiveList) renderCategories(currentAppMode);
                         else renderPlaylistsFolders(currentAppMode); 
@@ -1229,13 +1289,19 @@
             });
             if(activeNav) activeNav.classList.add('active');
 
-            if(mode === 'home') {
+            // --- OCULTAR ENLACES DE LA NAVBAR SOLO EN LA SECCIÓN DE INICIO ---
+            const navLinksContainer = document.getElementById('nav-content-links');
+            if (mode === 'home') {
+                navLinksContainer.style.display = 'none';
                 document.getElementById('home-section').style.display = 'block';
                 document.getElementById('main-content').style.display = 'none';
+                document.getElementById('home-editor-btn').style.display = isEditorMode ? 'block' : 'none';
                 loadTMDBHome();
             } else {
+                navLinksContainer.style.display = 'flex';
                 document.getElementById('home-section').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
+                document.getElementById('home-editor-btn').style.display = 'none';
                 await renderPlaylistsFolders(mode);
             }
         }
@@ -1256,7 +1322,7 @@
             if (isEditorMode) {
                 let addBtn = document.createElement('div');
                 addBtn.className = 'movie-card fallback-card add-list-card nav-item';
-                addBtn.setAttribute('tabindex', '0'); // Habilitar Focus TV
+                addBtn.setAttribute('tabindex', '0');
                 addBtn.innerHTML = '<i class="fas fa-plus fa-3x" style="color:var(--netflix-red);margin-bottom:10px;"></i><span>AGREGAR LISTA</span>';
                 
                 addBtn.onclick = () => { 
@@ -1282,7 +1348,7 @@
                 
                 let card = document.createElement('div');
                 card.className = 'movie-card fallback-card nav-item';
-                card.setAttribute('tabindex', '0'); // Habilitar Focus TV
+                card.setAttribute('tabindex', '0');
                 card.innerHTML = `<i class="fas fa-folder fa-3x" style="color:var(--netflix-red);margin-bottom:10px;"></i>
                                   <span style="padding:0 10px;">${list.name}</span>
                                   ${list.hidden ? '<i class="fas fa-eye-slash" style="position:absolute;top:10px;right:10px;color:#fff;"></i>' : ''}`;
@@ -1368,7 +1434,7 @@
 
             let backBtn = document.createElement('button');
             backBtn.className = 'smarters-cat-btn';
-            backBtn.setAttribute('tabindex', '0'); // Habilitar Focus TV
+            backBtn.setAttribute('tabindex', '0');
             backBtn.style.marginBottom = '15px';
             backBtn.style.borderColor = 'var(--netflix-red)';
             backBtn.innerHTML = `<div class="cat-info"><i class="fas fa-arrow-left"></i> <span>Volver a Listas</span></div>`;
@@ -1386,7 +1452,7 @@
                 let count = parsedM3U[cat].length;
                 let btn = document.createElement('button');
                 btn.className = `smarters-cat-btn ${index === 0 ? 'active' : ''} nav-item`;
-                btn.setAttribute('tabindex', '0'); // Habilitar Focus TV
+                btn.setAttribute('tabindex', '0');
                 btn.innerHTML = `<div class="cat-info"><i class="fas fa-folder-open"></i> <span>${cat}</span></div><span class="cat-count">${count}</span>`;
                 btn.onclick = () => {
                     document.querySelectorAll('.smarters-cat-btn').forEach(b => b.classList.remove('active'));
@@ -1401,7 +1467,6 @@
             }
         }
 
-        // RENDERIZADO DE CANALES Y LÓGICA DE REPRODUCCIÓN
         function renderGridItems(catName) {
             const grid = document.getElementById('main-content-grid');
             grid.innerHTML = '';
@@ -1416,12 +1481,11 @@
             items.forEach((item, idx) => {
                 let card = document.createElement('div');
                 card.className = `movie-card nav-item ${currentAppMode === 'live' ? 'live-card' : ''}`;
-                card.setAttribute('tabindex', '0'); // Habilitar Focus TV en pósters
+                card.setAttribute('tabindex', '0');
                 
                 let safeTitle = (item.title || 'CANAL NEON').replace(/'/g, "&#39;");
 
                 if (currentAppMode === 'live') {
-                    // CANALES: DISEÑO EXCLUSIVO NEÓN CON LETRAS TIPO IMAGEN SIN LOGO
                     card.innerHTML = `
                         <div class="neon-channel-box">
                             <span class="neon-channel-text">${safeTitle}</span>
@@ -1572,6 +1636,56 @@
         // --- CATÁLOGO DE PLATAFORMAS CON LOGOS Y AUTOMATIZACIÓN ---
         let homeCarouselInterval;
         let currentHomeIndex = 0;
+        let homeCustomBackground = null;
+
+        let homeSlideItems = [
+            {
+                title: "NETFLIX",
+                plot: "Series y películas exclusivas. Disfruta del mejor contenido original de la plataforma número uno del mundo.",
+                backdrop: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1920&auto=format&fit=crop",
+                poster: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg"
+            },
+            {
+                title: "DISNEY+",
+                plot: "La magia de Disney, Pixar, Marvel, Star Wars y National Geographic reunida en un solo lugar.",
+                backdrop: "https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?q=80&w=1920&auto=format&fit=crop",
+                poster: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg"
+            },
+            {
+                title: "MAX",
+                plot: "Disfruta de los estrenos mundiales de Warner Bros, DC, Cartoon Network y los aclamados originales de HBO.",
+                backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1920&auto=format&fit=crop",
+                poster: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg"
+            },
+            {
+                title: "FOX SPORTS",
+                plot: "La pasión del deporte en vivo. Fútbol internacional, automovilismo, artes marciales mixtas y eventos premium.",
+                backdrop: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1920&auto=format&fit=crop",
+                poster: "https://upload.wikimedia.org/wikipedia/commons/0/02/Fox_Sports_logo.svg"
+            },
+            {
+                title: "PRIME VIDEO",
+                plot: "Producciones originales y galardonadas, películas exitosas y canales premium seleccionados para ti.",
+                backdrop: "https://images.unsplash.com/photo-1588694086422-921d7b309f45?q=80&w=1920&auto=format&fit=crop",
+                poster: "https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg"
+            },
+            {
+                title: "STAR+",
+                plot: "Deportes en vivo con ESPN, comedias animadas, películas exitosas y series exclusivas de entretenimiento general.",
+                backdrop: "https://images.unsplash.com/photo-1518605368461-1e1e1143c7b8?q=80&w=1920&auto=format&fit=crop",
+                poster: "https://upload.wikimedia.org/wikipedia/commons/b/b3/Star%2B_logo.svg"
+            }
+        ];
+
+        // SINCRO DE DATOS DE INICIO EN FIREBASE NUBE
+        database.ref('home_config').on('value', (snap) => {
+            let data = snap.val();
+            if (data) {
+                if (data.background) homeCustomBackground = data.background;
+                if (data.slides && Array.isArray(data.slides)) homeSlideItems = data.slides;
+                if (currentAppMode === 'home') loadTMDBHome();
+            }
+        });
 
         function loadTMDBHome() {
             const titleEl = document.getElementById('home-title');
@@ -1582,58 +1696,17 @@
             if (!carousel) return;
             carousel.innerHTML = '';
             
-            // Limpiar temporizador previo para evitar que se dupliquen al recargar la vista
-            if (homeCarouselInterval) {
-                clearInterval(homeCarouselInterval);
-            }
-
-            const items = [
-                {
-                    title: "NETFLIX",
-                    plot: "Series y películas exclusivas. Disfruta del mejor contenido original de la plataforma número uno del mundo.",
-                    backdrop: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1920&auto=format&fit=crop",
-                    poster: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg"
-                },
-                {
-                    title: "DISNEY+",
-                    plot: "La magia de Disney, Pixar, Marvel, Star Wars y National Geographic reunida en un solo lugar.",
-                    backdrop: "https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?q=80&w=1920&auto=format&fit=crop",
-                    poster: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg"
-                },
-                {
-                    title: "MAX",
-                    plot: "Disfruta de los estrenos mundiales de Warner Bros, DC, Cartoon Network y los aclamados originales de HBO.",
-                    backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1920&auto=format&fit=crop",
-                    poster: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg"
-                },
-                {
-                    title: "FOX SPORTS",
-                    plot: "La pasión del deporte en vivo. Fútbol internacional, automovilismo, artes marciales mixtas y eventos premium.",
-                    backdrop: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1920&auto=format&fit=crop",
-                    poster: "https://upload.wikimedia.org/wikipedia/commons/0/02/Fox_Sports_logo.svg"
-                },
-                {
-                    title: "PRIME VIDEO",
-                    plot: "Producciones originales y galardonadas, películas exitosas y canales premium seleccionados para ti.",
-                    backdrop: "https://images.unsplash.com/photo-1588694086422-921d7b309f45?q=80&w=1920&auto=format&fit=crop",
-                    poster: "https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg"
-                },
-                {
-                    title: "STAR+",
-                    plot: "Deportes en vivo con ESPN, comedias animadas, películas exitosas y series exclusivas de entretenimiento general.",
-                    backdrop: "https://images.unsplash.com/photo-1518605368461-1e1e1143c7b8?q=80&w=1920&auto=format&fit=crop",
-                    poster: "https://upload.wikimedia.org/wikipedia/commons/b/b3/Star%2B_logo.svg"
-                }
-            ];
+            if (homeCarouselInterval) clearInterval(homeCarouselInterval);
 
             function updateHero(index) {
-                if (!items[index]) return;
-                const item = items[index];
-                bgEl.style.backgroundImage = `url('${item.backdrop}')`;
+                if (!homeSlideItems[index]) return;
+                const item = homeSlideItems[index];
+                
+                // Si existe un fondo estático global personalizado en el editor se usa, de lo contrario la imagen individual
+                bgEl.style.backgroundImage = `url('${homeCustomBackground || item.backdrop}')`;
                 titleEl.innerText = item.title;
                 plotEl.innerText = item.plot;
                 
-                // Actualizar estilos activos de las tarjetas en el carrusel
                 Array.from(carousel.children).forEach((el, i) => {
                     if (i === index) {
                         el.style.border = '2px solid var(--netflix-red)';
@@ -1650,12 +1723,11 @@
             }
 
             function startAutoSlide() {
-                // Cambiar automáticamente cada 5 segundos (5000 milisegundos)
+                if (homeSlideItems.length === 0) return;
                 homeCarouselInterval = setInterval(() => {
-                    currentHomeIndex = (currentHomeIndex + 1) % items.length;
+                    currentHomeIndex = (currentHomeIndex + 1) % homeSlideItems.length;
                     updateHero(currentHomeIndex);
                     
-                    // Asegurar que el elemento activo se mantenga visible en la pantalla
                     const activeCard = carousel.children[currentHomeIndex];
                     if(activeCard) {
                         activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -1663,29 +1735,132 @@
                 }, 5000);
             }
 
-            items.forEach((item, idx) => {
+            homeSlideItems.forEach((item, idx) => {
                 let card = document.createElement('div');
                 card.className = 'carousel-item nav-item';
                 card.setAttribute('tabindex', '0');
                 
-                // Estilo en línea para acomodar los logos SVG de manera que queden centrados con "object-fit: contain" y fondo oscuro
                 card.innerHTML = `<img src="${item.poster}" alt="${item.title}" style="object-fit: contain; padding: 20px; background: rgba(5,5,7,0.9); width: 100%; height: 100%;">`;
                 
                 card.onclick = () => {
                     currentHomeIndex = idx;
                     updateHero(currentHomeIndex);
                     
-                    // Al seleccionar manualmente, reiniciamos el temporizador para que no cambie repentinamente
                     clearInterval(homeCarouselInterval);
                     startAutoSlide();
                 };
                 carousel.appendChild(card);
             });
 
-            // Iniciar configuración en la primera tarjeta e iniciar la animación automática
             currentHomeIndex = 0;
-            updateHero(0);
-            startAutoSlide();
+            if (homeSlideItems.length > 0) {
+                updateHero(0);
+                startAutoSlide();
+            }
+        }
+
+        // --- FUNCIONES DEL EDITOR DE INICIO (IMAGEN DE FONDO Y SLIDER) ---
+        function openHomeEditorModal() {
+            document.getElementById('home-custom-bg-input').value = homeCustomBackground || '';
+            
+            const selector = document.getElementById('home-slide-selector');
+            selector.innerHTML = '<option value="new">+ AGREGAR NUEVO SLIDE</option>';
+            
+            homeSlideItems.forEach((slide, idx) => {
+                let opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = `${idx + 1}. ${slide.title}`;
+                selector.appendChild(opt);
+            });
+
+            loadHomeSlideDataForEdit();
+            document.getElementById('home-editor-modal').style.display = 'flex';
+        }
+
+        function closeHomeEditorModal() {
+            document.getElementById('home-editor-modal').style.display = 'none';
+        }
+
+        function loadHomeSlideDataForEdit() {
+            const val = document.getElementById('home-slide-selector').value;
+            const delBtn = document.getElementById('btn-delete-slide');
+
+            if (val === 'new') {
+                document.getElementById('slide-title-input').value = '';
+                document.getElementById('slide-plot-input').value = '';
+                document.getElementById('slide-backdrop-input').value = '';
+                document.getElementById('slide-poster-input').value = '';
+                delBtn.style.display = 'none';
+            } else {
+                let idx = parseInt(val);
+                let slide = homeSlideItems[idx];
+                if (slide) {
+                    document.getElementById('slide-title-input').value = slide.title || '';
+                    document.getElementById('slide-plot-input').value = slide.plot || '';
+                    document.getElementById('slide-backdrop-input').value = slide.backdrop || '';
+                    document.getElementById('slide-poster-input').value = slide.poster || '';
+                    delBtn.style.display = 'block';
+                }
+            }
+        }
+
+        async function saveCustomHomeBg() {
+            let url = document.getElementById('home-custom-bg-input').value.trim();
+            homeCustomBackground = url || null;
+            
+            document.getElementById('loader').style.display = 'flex';
+            await database.ref('home_config/background').set(homeCustomBackground);
+            document.getElementById('loader').style.display = 'none';
+            
+            loadTMDBHome();
+            alert("Imagen de fondo principal actualizada correctamente.");
+        }
+
+        async function saveHomeSlide() {
+            const val = document.getElementById('home-slide-selector').value;
+            const title = document.getElementById('slide-title-input').value.trim();
+            const plot = document.getElementById('slide-plot-input').value.trim();
+            const backdrop = document.getElementById('slide-backdrop-input').value.trim();
+            const poster = document.getElementById('slide-poster-input').value.trim();
+
+            if (!title) {
+                alert("Ingresa un título para el slide.");
+                return;
+            }
+
+            let newSlide = { title, plot, backdrop, poster };
+
+            if (val === 'new') {
+                homeSlideItems.push(newSlide);
+            } else {
+                let idx = parseInt(val);
+                homeSlideItems[idx] = newSlide;
+            }
+
+            document.getElementById('loader').style.display = 'flex';
+            await database.ref('home_config/slides').set(homeSlideItems);
+            document.getElementById('loader').style.display = 'none';
+
+            openHomeEditorModal();
+            loadTMDBHome();
+            alert("Slide guardado correctamente.");
+        }
+
+        async function deleteHomeSlide() {
+            const val = document.getElementById('home-slide-selector').value;
+            if (val !== 'new') {
+                let idx = parseInt(val);
+                if (confirm(`¿Eliminar el slide "${homeSlideItems[idx].title}"?`)) {
+                    homeSlideItems.splice(idx, 1);
+                    
+                    document.getElementById('loader').style.display = 'flex';
+                    await database.ref('home_config/slides').set(homeSlideItems);
+                    document.getElementById('loader').style.display = 'none';
+
+                    openHomeEditorModal();
+                    loadTMDBHome();
+                }
+            }
         }
     </script>
 </body>
