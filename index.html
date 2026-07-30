@@ -238,16 +238,6 @@
             text-shadow: var(--neon-glow);
         }
 
-        /* EFECTOS DRAG AND DROP */
-        .draggable { cursor: grab !important; }
-        .draggable:active { cursor: grabbing !important; }
-        .drag-over {
-            border: 2px dashed var(--netflix-red) !important;
-            background: rgba(0, 243, 255, 0.2) !important;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5) !important;
-            transform: scale(1.02) translateX(5px) !important;
-        }
-
         .movie-card, .navbar, .episode-card, .nav-item, .carousel-item, .home-hero-bg {
             transform: translateZ(0); will-change: transform, box-shadow; backface-visibility: hidden;
         }
@@ -300,24 +290,6 @@
             margin-right: -10px; 
         }
 
-        /* --- ESTILOS DE FORMULARIO LOGIN --- */
-        .login-divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            color: var(--grey);
-            font-size: 12px;
-            font-weight: 600;
-            margin: 25px 0 15px 0;
-        }
-        .login-divider::before, .login-divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .login-divider::before { margin-right: 1em; }
-        .login-divider::after { margin-left: 1em; }
-
         .login-box input, .login-box textarea, .admin-box input, .admin-box select, .admin-box textarea {
             width: 100%; padding: 15px 18px; 
             background: rgba(0,0,0,0.5); 
@@ -341,7 +313,7 @@
             z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         .navbar-left { display: flex; align-items: center; flex: 1; }
-        .navbar-right { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+        .navbar-right { display: flex; align-items: center; gap: 15px; justify-content: flex-end; }
         
         .brand-logo { 
             color: #fff; font-size: 26px; font-weight: 900; 
@@ -540,31 +512,22 @@
 
     <div id="loader"><div class="nf-loader"></div></div>
 
-    <!-- PANTALLA LOGIN FIREBASE DEVICE CODE & CREDS -->
+    <!-- PANTALLA LOGIN FIREBASE DEVICE CODE -->
     <div id="login">
         <div class="login-box">
             <div style="text-align:center; margin-bottom:20px;">
                 <div class="brand-logo nav-item" tabindex="0" style="margin:0; font-size: 34px; display: inline-block; padding: 10px 20px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:12px; backdrop-filter:blur(5px);" onclick="secretLogoClick()">FIRENETX</div>
             </div>
             
-            <h1 style="font-size: 20px;">VINCULACIÓN DE PANTALLA</h1>
-            <div class="help-tip" style="justify-content: center; font-size: 11px;"><i class="fas fa-satellite-dish"></i> Otorga este código en el panel para activar</div>
+            <h1>VINCULAR DISPOSITIVO</h1>
+            <div class="help-tip" style="justify-content: center;"><i class="fas fa-satellite-dish"></i> Proporciona este código a tu proveedor</div>
             
-            <div class="device-code-display" id="device-code-box" onclick="forceResetCode()" title="Haz clic para generar un nuevo código" style="margin: 15px 0;">
+            <div class="device-code-display" id="device-code-box" onclick="forceResetCode()" title="Haz clic para generar un nuevo código">
                 <span id="display-device-code">------</span>
             </div>
 
-            <p id="connection-status-text" style="color: var(--grey); font-size: 13px; margin-bottom: 5px;">Conectando a red neuronal...</p>
-            <div class="nf-loader" style="width: 20px; height: 20px; margin: 0 auto; display: block; border-width: 2px;"></div>
-
-            <div class="login-divider">O INICIA SESIÓN MANUALMENTE</div>
-
-            <!-- FORMULARIO MANUAL DE USUARIO Y CONTRASEÑA -->
-            <div style="display:flex; flex-direction:column; gap:12px; width: 100%;">
-                <input type="text" id="iptv-user" placeholder="Usuario asignado en el panel" class="nav-item">
-                <input type="password" id="iptv-pass" placeholder="Contraseña" class="nav-item">
-                <button id="manual-login-btn" class="btn-netflix-play-mini nav-item" onclick="loginWithCredentials()">INICIAR SESIÓN</button>
-            </div>
+            <p id="connection-status-text" style="color: var(--grey); font-size: 14px; margin-bottom: 20px;">Conectando a red neuronal...</p>
+            <div class="nf-loader" id="login-spinner" style="width: 30px; height: 30px; margin: 0 auto; display: block; border-width: 3px;"></div>
         </div>
     </div>
 
@@ -643,6 +606,8 @@
             </div>
         </div>
         <div class="navbar-right">
+            <!-- AQUÍ SE MOSTRARÁ EL USUARIO Y LA FECHA DE VENCIMIENTO -->
+            <div id="nav-user-info" style="color: var(--grey); font-size: 12px; margin-right: 15px; text-align: right; line-height: 1.3;"></div>
             <button class="nav-btn-float nav-item" style="color:var(--grey); border-color:transparent;" onclick="logout()"><i class="fas fa-power-off"></i> Salir</button>
         </div>
     </nav>
@@ -700,7 +665,7 @@
 
     <!-- SCRIPTS LÓGICOS -->
     <script>
-        // Animación de Intro
+        // Animación de Intro (se oculta al inicio)
         setTimeout(() => {
             const intro = document.getElementById('intro-screen');
             if (intro) {
@@ -733,12 +698,15 @@
             return code;
         }
 
+        // Búsqueda profunda súper robusta
         function isDeviceActive(data) {
             if (data === null || data === undefined) return false;
+            
             if (typeof data === 'string') {
                 const val = data.trim().toLowerCase();
                 return ['active', 'activo', 'true', '1', 'on', 'yes', 'si', 'ok', 'approved', 'permitido'].includes(val);
             }
+            
             if (typeof data === 'boolean') return data === true;
             if (typeof data === 'number') return data === 1;
             
@@ -746,6 +714,7 @@
                 for (let key in data) {
                     const k = key.toLowerCase();
                     const v = data[key];
+                    
                     if (['status', 'estado', 'state', 'active', 'isactive', 'activated', 'activo', 'acceso', 'access', 'auth', 'authorization', 'login'].includes(k)) {
                         if (v === true || v === 1) return true;
                         if (typeof v === 'string') {
@@ -753,6 +722,7 @@
                             if (['active', 'activo', 'true', '1', 'on', 'yes', 'si', 'granted', 'permitido', 'approved', 'aprobado', 'ok'].includes(valStr)) return true;
                         }
                     }
+                    
                     if (typeof v === 'object' && v !== null) {
                         if (isDeviceActive(v)) return true;
                     }
@@ -761,16 +731,8 @@
             return false;
         }
 
-        function checkExpiration(data) {
-            // Busca fechas de vencimiento comunes de paneles
-            let expStr = data.vencimiento || data.fecha_vencimiento || data.expiration || data.expire_date;
-            if (!expStr) return true; // Si el panel no manda fecha, lo asume permanente
-            let expDate = new Date(expStr);
-            // Validar que la fecha sea mayor al día de hoy
-            return expDate.getTime() > Date.now();
-        }
-
         let deviceCode;
+        
         try {
             deviceCode = localStorage.getItem('firenetx_device_code');
             if (deviceCode) {
@@ -801,7 +763,7 @@
             const statusTxt = document.getElementById('connection-status-text');
             const codeBox = document.getElementById('device-code-box');
             if (snap.val() === true) {
-                statusTxt.innerText = "Esperando activación remota del panel...";
+                statusTxt.innerText = "Esperando activación desde el Panel Reseller...";
                 codeBox.style.borderColor = "var(--watched-green)";
                 codeBox.style.boxShadow = "0 0 15px rgba(0, 255, 170, 0.5)";
             } else {
@@ -811,15 +773,13 @@
             }
         });
 
-        // ==========================================
-        // CORRECCIÓN PRINCIPAL: ESCUCHADOR FIREBASE
-        // ==========================================
         const deviceRef = database.ref('/' + deviceCode);
 
         deviceRef.on('value', (snapshot) => {
             try {
                 if (!snapshot.exists()) {
-                    // AQUÍ ESTABA EL BUG. Ahora se crea como Pendiente en lugar de Activo.
+                    // CORRECCIÓN PRINCIPAL: Se envía el código con status 'Pendiente'
+                    // Antes decía 'Activo', por lo que entraba directo de forma gratuita.
                     deviceRef.set({
                         status: 'Pendiente', 
                         createdAt: firebase.database.ServerValue.TIMESTAMP || Date.now()
@@ -828,151 +788,114 @@
                 }
 
                 const data = snapshot.val();
+                let isActive = isDeviceActive(data);
+                let isExpired = false;
+                let statusMessage = "Esperando activación desde el Panel Reseller...";
                 
-                const isActive = isDeviceActive(data);
-                const isValidDate = checkExpiration(data);
+                // CORRECCIÓN SECUNDARIA: Validar fecha de vencimiento
+                // Busca diferentes nombres de variables que tu panel pueda estar enviando
+                let expirationField = data.vencimiento || data.expiracion || data.fecha_vencimiento || data.expiration || data.fecha;
                 
-                // Asegurarse de que el panel asignó usuario/contraseña al cliente
-                const hasUser = data.usuario || data.username || data.user;
-                const hasPass = data.password || data.contraseña || data.pass;
-                const hasCredentials = hasUser && hasPass;
+                if (expirationField) {
+                    let expDate = new Date(expirationField);
+                    // Comprobar si la fecha es válida y si ya pasó
+                    if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+                        isExpired = true;
+                        isActive = false; // Forzamos el bloqueo de acceso aunque diga "Activo"
+                        statusMessage = "Tu suscripción ha vencido (" + expirationField + ")";
+                    }
+                }
+                
+                const statusTxt = document.getElementById('connection-status-text');
+                const codeBox = document.getElementById('device-code-box');
+                const spinner = document.getElementById('login-spinner');
 
-                // VALIDACIÓN ESTRICTA
-                if (isActive && isValidDate && hasCredentials) {
-                    processAccessGranted(data);
-                } else if (isActive && !isValidDate) {
-                    // Si está activo pero vencido
-                    document.getElementById('connection-status-text').innerHTML = "<b>Suscripción Expirada.</b><br>Contacta a tu proveedor.";
-                    document.getElementById('connection-status-text').style.color = "var(--netflix-red)";
-                    forceLogoutSilently();
-                } else if (isActive && !hasCredentials) {
-                    // Si está activo pero el panel no le configuró usuario/pass
-                    document.getElementById('connection-status-text').innerHTML = "<b>Faltan Credenciales.</b><br>Dile a tu proveedor que asigne Usuario/Contraseña en el panel.";
-                    document.getElementById('connection-status-text').style.color = "var(--neon-yellow)";
-                    forceLogoutSilently();
+                if (isActive && !isExpired) {
+                    // Extraer los datos del usuario enviados por tu panel
+                    let userDisplay = data.usuario || data.user || data.cliente || 'Cliente VIP';
+                    let expDisplay = expirationField || 'Ilimitado';
+                    
+                    // Mostrar usuario y fecha en el navbar
+                    document.getElementById('nav-user-info').innerHTML = `
+                        <span style="color:#fff; font-weight:bold;"><i class="fas fa-user"></i> ${userDisplay}</span><br>
+                        <span style="color:var(--netflix-red);">Vence: ${expDisplay}</span>
+                    `;
+
+                    try {
+                        if (data !== null && typeof data === 'object' && data.playlistData && data.playlistName) {
+                            const safeId = data.playlistId || 'remote_auto_list_01';
+                            saveListToDB({
+                                id: safeId,
+                                name: data.playlistName,
+                                category: data.playlistCategory || 'movie',
+                                type: 'url',
+                                data: data.playlistData,
+                                hidden: false
+                            }).then(() => {
+                                if (hasEnteredApp && currentAppMode === (data.playlistCategory || 'movie')) {
+                                    renderPlaylistsFolders(currentAppMode);
+                                }
+                            }).catch(err => console.warn(err));
+                        }
+                    } catch(err) {
+                        console.warn("Error importando lista remota:", err);
+                    }
+                    
+                    if (!hasEnteredApp) {
+                        hasEnteredApp = true;
+                        accessGranted = true;
+                        
+                        const loaderElement = document.getElementById('loader');
+                        if(loaderElement) loaderElement.style.display = 'flex';
+                        
+                        setTimeout(() => {
+                            try {
+                                document.getElementById('login').style.display = 'none';
+                                document.getElementById('main-nav').style.display = 'flex';
+                                changeMode('home');
+                                loadTMDBHome();
+                            } catch(domErr) {
+                                console.error("Error UI render:", domErr);
+                            }
+                            if(loaderElement) loaderElement.style.display = 'none';
+                        }, 1000);
+                    }
                 } else {
-                    // Pendiente o Inactivo
-                    document.getElementById('connection-status-text').innerText = "Esperando activación remota del panel...";
-                    document.getElementById('connection-status-text').style.color = "var(--grey)";
-                    forceLogoutSilently();
+                    // Si el acceso fue denegado o ha expirado
+                    if (statusTxt) statusTxt.innerText = statusMessage;
+                    
+                    if (isExpired) {
+                        if (codeBox) {
+                            codeBox.style.borderColor = "var(--netflix-red)";
+                            codeBox.style.boxShadow = "0 0 15px rgba(255, 0, 0, 0.7)";
+                        }
+                        if (spinner) spinner.style.display = 'none';
+                    } else if (data.status && data.status.toLowerCase() !== 'pendiente') {
+                        // Si el reseller le puso "Inactivo" manualmente
+                        statusTxt.innerText = "Acceso Inactivo / Bloqueado.";
+                        if (spinner) spinner.style.display = 'none';
+                    } else {
+                        if (spinner) spinner.style.display = 'block';
+                    }
+
+                    if (hasEnteredApp || accessGranted) {
+                        hasEnteredApp = false;
+                        accessGranted = false;
+                        logout();
+                    }
                 }
             } catch (fatalError) {
                 console.error("Error crítico en listener DB Firebase:", fatalError);
             }
+        }, (error) => {
+            console.error("Fallo de permisos o lectura en Firebase:", error);
         });
-
-        // ==========================================
-        // NUEVA FUNCIÓN: LOGIN MANUAL CON USUARIO
-        // ==========================================
-        async function loginWithCredentials() {
-            const u = document.getElementById('iptv-user').value.trim();
-            const p = document.getElementById('iptv-pass').value.trim();
-            const btn = document.getElementById('manual-login-btn');
-            
-            if (!u || !p) {
-                alert("Por favor, ingresa tu usuario y contraseña proporcionados por tu proveedor.");
-                return;
-            }
-
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFICANDO...';
-
-            try {
-                // Buscamos si el panel guarda los usuarios en la raíz o en una carpeta /users
-                let snap = await database.ref('/' + u).once('value');
-                if (!snap.exists()) {
-                    snap = await database.ref('/users/' + u).once('value');
-                }
-                
-                if (snap.exists()) {
-                    const data = snap.val();
-                    
-                    // Comprobar contraseña (verificando múltiples nombres de variables de panel)
-                    const passMatch = (data.password === p || data.contraseña === p || data.pass === p);
-                    
-                    if (passMatch) {
-                        const isActive = isDeviceActive(data);
-                        const isValidDate = checkExpiration(data);
-
-                        if (isActive && isValidDate) {
-                            processAccessGranted(data);
-                        } else if (!isValidDate) {
-                            alert("Acceso denegado: Tu cuenta ha expirado.");
-                        } else {
-                            alert("Acceso denegado: Tu cuenta está inactiva.");
-                        }
-                    } else {
-                        alert("Contraseña incorrecta.");
-                    }
-                } else {
-                    alert("El usuario no existe en nuestra base de datos.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Error al conectar con el panel de validación.");
-            }
-            btn.innerHTML = 'INICIAR SESIÓN';
-        }
-
-        // ==========================================
-        // PROCESAMIENTO DE ACCESO
-        // ==========================================
-        function processAccessGranted(data) {
-            try {
-                if (data !== null && typeof data === 'object' && data.playlistData && data.playlistName) {
-                    const safeId = data.playlistId || 'remote_auto_list_01';
-                    saveListToDB({
-                        id: safeId,
-                        name: data.playlistName,
-                        category: data.playlistCategory || 'movie',
-                        type: 'url',
-                        data: data.playlistData,
-                        hidden: false
-                    }).then(() => {
-                        if (hasEnteredApp && currentAppMode === (data.playlistCategory || 'movie')) {
-                            renderPlaylistsFolders(currentAppMode);
-                        }
-                    }).catch(err => console.warn(err));
-                }
-            } catch(err) {
-                console.warn("Error importando lista remota:", err);
-            }
-            
-            if (!hasEnteredApp) {
-                hasEnteredApp = true;
-                accessGranted = true;
-                
-                const loaderElement = document.getElementById('loader');
-                if(loaderElement) loaderElement.style.display = 'flex';
-                
-                setTimeout(() => {
-                    try {
-                        document.getElementById('login').style.display = 'none';
-                        document.getElementById('main-nav').style.display = 'flex';
-                        changeMode('home');
-                        loadTMDBHome();
-                    } catch(domErr) {
-                        console.error("Error UI render:", domErr);
-                    }
-                    if(loaderElement) loaderElement.style.display = 'none';
-                }, 1000);
-            }
-        }
-
-        function forceLogoutSilently() {
-            if (hasEnteredApp || accessGranted) {
-                hasEnteredApp = false;
-                accessGranted = false;
-                logout();
-            }
-        }
 
         function logout() {
             document.getElementById('login').style.display = 'flex'; 
             document.getElementById('main-nav').style.display = 'none';
             document.getElementById('home-section').style.display = 'none'; 
             document.getElementById('main-content').style.display = 'none';
-            hasEnteredApp = false;
-            accessGranted = false;
         }
 
         // === 1. LÓGICA MODO EDITOR Y CLICKS SECRETOS ===
@@ -1471,4 +1394,5 @@
     </script>
 </body>
 </html>
+
 
