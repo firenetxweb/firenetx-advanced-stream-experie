@@ -1269,7 +1269,7 @@
             let currentItem = null;
 
             for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
+                let line = lines[i].trim(); // Fundamental para no arrastrar \r en la URL
                 if (!line) continue;
 
                 if (line.startsWith('#EXTINF:')) {
@@ -1521,7 +1521,7 @@
         function closeItemEditor() { document.getElementById('item-editor-modal').style.display = 'none'; }
         function closeModals() {
             document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
-            // Si cerramos modal, volvemos foco al contenedor
+            // Si cerramos modal, volvemos foco al contenedor principal
             document.getElementById('main-content').focus();
         }
 
@@ -1676,229 +1676,188 @@
             };
 
             document.getElementById('loader').style.display = 'flex';
-            await saveListToDB(newList);
-            document.getElementById('loader').style.display = 'none';
-
-            closeEditorModal();
-            if (currentAppMode !== 'home') {
-                await renderPlaylistsFolders(currentAppMode);
+            try {
+                await saveListToDB(newList);
+                alert("Lista guardada exitosamente.");
+                closeEditorModal();
+                renderPlaylistsFolders(currentAppMode);
+            } catch(e) {
+                console.error("Error al guardar lista:", e);
+                alert("Hubo un error al sincronizar con la nube.");
             }
+            document.getElementById('loader').style.display = 'none';
         }
 
+        // --- RENDERIZAR CATEGORÍAS DENTRO DE UNA LISTA ---
         async function renderCategories(mode) {
-            if (!currentActiveList) return;
-            document.getElementById('loader').style.display = 'flex';
-
-            let m3uData = currentActiveList.data || '';
-
-            if (currentActiveList.type === 'url' && (m3uData.startsWith('http://') || m3uData.startsWith('https://'))) {
-                try {
-                    let res = await fetch(m3uData);
-                    if (res.ok) {
-                        m3uData = await res.text();
-                    } else {
-                        let proxyRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(m3uData));
-                        if (proxyRes.ok) m3uData = await proxyRes.text();
-                    }
-                } catch (err) {
-                    try {
-                        let proxyRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(m3uData));
-                        if (proxyRes.ok) m3uData = await proxyRes.text();
-                    } catch(e) {
-                        console.error('No se pudo cargar la lista remota URL', e);
-                    }
-                }
-            }
-
-            parseM3UText(m3uData);
-            document.getElementById('loader').style.display = 'none';
-
+            const grid = document.getElementById('main-content-grid');
             const sidebar = document.getElementById('left-category-sidebar');
+            grid.innerHTML = '';
             sidebar.innerHTML = '';
 
-            let backBtn = document.createElement('button');
-            backBtn.className = 'smarters-cat-btn';
-            backBtn.setAttribute('tabindex', '0');
-            backBtn.style.marginBottom = '15px';
-            backBtn.style.borderColor = 'rgba(255,255,255,0.2)';
-            backBtn.innerHTML = `<div class="cat-info"><i class="fas fa-arrow-left"></i> <span>Volver a Listas</span></div>`;
-            backBtn.onclick = () => renderPlaylistsFolders(mode);
-            sidebar.appendChild(backBtn);
+            if (!currentActiveList) return;
 
-            let categories = Object.keys(parsedM3U);
-            if (categories.length === 0 || (categories.length === 1 && parsedM3U['TODOS'].length === 0)) {
-                sidebar.innerHTML += `<div class="help-tip">No se encontraron elementos en esta lista.</div>`;
-                document.getElementById('main-content-grid').innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--grey);">Lista vacía o formato M3U no válido.</div>';
-                return;
+            document.getElementById('loader').style.display = 'flex';
+
+            let rawData = "";
+            if (currentActiveList.type === 'url') {
+                try {
+                    let response = await fetch(currentActiveList.data);
+                    rawData = await response.text();
+                } catch (error) {
+                    alert("Error al cargar la lista remota. Comprueba la URL o problemas de CORS.");
+                    document.getElementById('loader').style.display = 'none';
+                    return;
+                }
+            } else {
+                rawData = currentActiveList.data;
             }
 
-            categories.forEach((cat, index) => {
-                let count = parsedM3U[cat].length;
+            parsedM3U = parseM3UText(rawData);
+            
+            let btnBack = document.createElement('button');
+            btnBack.className = 'smarters-cat-btn nav-item';
+            btnBack.innerHTML = `<div class="cat-info"><i class="fas fa-arrow-left"></i> VOLVER A LISTAS</div>`;
+            btnBack.onclick = () => {
+                currentActiveList = null;
+                renderPlaylistsFolders(mode);
+            };
+            sidebar.appendChild(btnBack);
+
+            let firstCat = null;
+            for (let cat in parsedM3U) {
+                if (cat === 'TODOS' || parsedM3U[cat].length === 0) continue;
+                if (!firstCat) firstCat = cat;
+                
                 let btn = document.createElement('button');
-                btn.className = `smarters-cat-btn ${index === 0 ? 'active' : ''} nav-item`;
-                btn.setAttribute('tabindex', '0');
-                btn.innerHTML = `<div class="cat-info"><i class="fas fa-folder-open"></i> <span>${cat}</span></div><span class="cat-count">${count}</span>`;
+                btn.className = 'smarters-cat-btn nav-item';
+                btn.innerHTML = `<div class="cat-info"><i class="fas fa-folder"></i> ${cat}</div> <span class="cat-count">${parsedM3U[cat].length}</span>`;
                 btn.onclick = () => {
                     document.querySelectorAll('.smarters-cat-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    renderGridItems(cat);
+                    renderItems(cat);
                 };
                 sidebar.appendChild(btn);
-            });
-
-            if (categories.length > 0) {
-                renderGridItems(categories[0]);
-            }
-        }
-
-        // --- FUNCION AUXILIAR TMDB ---
-        function cleanTitleForTMDB(title) {
-            if (!title) return '';
-            return title.replace(/\([^)]*\)|\[[^\]]*\]/g, '').trim();
-        }
-
-        function handleImgError(imgElement) {
-            imgElement.src = "https://via.placeholder.com/300x450/101015/ffffff?text=NO+IMAGE";
-        }
-
-        function playStream(url) {
-            if (!url) return alert("Error: URL de video no encontrada.");
-            // Redirección o intento estándar para reproductores IPTV
-            window.location.href = `intent://${url}#Intent;type=video/*;scheme=http;end;`;
-            // Fallback si no hay soporte de intent:
-            setTimeout(() => {
-                window.open(url, '_blank');
-            }, 600);
-        }
-
-        async function openModal(item, catName, idx) {
-            document.getElementById('m-title').innerText = item.title;
-            document.getElementById('m-poster').src = item.logo || 'https://via.placeholder.com/300x450/101015/ffffff?text=NO+IMAGE';
-            document.getElementById('m-plot').innerText = 'Conectando al clúster de información. Contenido listo para reproducir.';
-            document.getElementById('m-meta-container').innerHTML = '';
-            document.getElementById('m-info-grid').innerHTML = '';
-            
-            document.getElementById('m-play-btn').onclick = () => playStream(item.url);
-            
-            // Intento de obtener metadatos de TMDB para Películas o Series
-            if (currentAppMode !== 'live' && item.title) {
-                let cleanName = cleanTitleForTMDB(item.title);
-                let type = currentAppMode === 'series' ? 'tv' : 'movie';
-                try {
-                    let res = await fetch(`${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&language=es-MX&query=${encodeURIComponent(cleanName)}`);
-                    let data = await res.json();
-                    if (data.results && data.results.length > 0) {
-                        let tmdb = data.results[0];
-                        if (tmdb.poster_path) {
-                            document.getElementById('m-poster').src = TMDB_IMAGE_BASE + tmdb.poster_path;
-                        }
-                        if (tmdb.overview) {
-                            document.getElementById('m-plot').innerText = tmdb.overview;
-                        }
-                        document.getElementById('m-meta-container').innerHTML = `
-                            <span class="smarters-badge azul"><i class="fas fa-star"></i> ${tmdb.vote_average ? tmdb.vote_average.toFixed(1) : 'N/A'}</span>
-                            <span class="smarters-badge">${tmdb.release_date ? tmdb.release_date.substring(0,4) : (tmdb.first_air_date ? tmdb.first_air_date.substring(0,4) : 'N/A')}</span>
-                            <span class="smarters-badge" style="text-transform: uppercase;">${tmdb.original_language || 'ES'}</span>
-                        `;
-                    }
-                } catch(e) { console.warn("Error fetching TMDB:", e); }
             }
 
-            document.getElementById('modal-info').style.display = 'flex';
-            document.getElementById('m-play-btn').focus();
-        }
-
-        function editItem(catName, idx) {
-            let item = parsedM3U[catName][idx];
-            document.getElementById('item-title').value = item.title || '';
-            document.getElementById('item-logo').value = item.logo || '';
-            document.getElementById('item-url').value = item.url || '';
-            document.getElementById('item-original-cat').value = catName;
-            document.getElementById('item-original-idx').value = idx;
-            document.getElementById('item-editor-modal').style.display = 'flex';
-        }
-
-        async function saveItemEdit() {
-            let catName = document.getElementById('item-original-cat').value;
-            let idx = parseInt(document.getElementById('item-original-idx').value);
-            
-            parsedM3U[catName][idx].title = document.getElementById('item-title').value;
-            parsedM3U[catName][idx].logo = document.getElementById('item-logo').value;
-            parsedM3U[catName][idx].url = document.getElementById('item-url').value;
-            
-            closeItemEditor();
-            await saveM3UState();
-            renderGridItems(catName);
-        }
-
-        async function deleteItem(catName, idx) {
-            if (confirm("¿Eliminar este elemento de la lista?")) {
-                parsedM3U[catName].splice(idx, 1);
-                await saveM3UState();
-                renderGridItems(catName);
+            if (firstCat) {
+                // Hacer clic automático en la primera categoría válida
+                sidebar.children[1].click(); 
+            } else {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--grey);">La lista está vacía o el formato m3u es incorrecto.</div>`;
             }
+
+            document.getElementById('loader').style.display = 'none';
         }
 
-        // --- COMPLETANDO EL RENDER Y AÑADIENDO LÓGICA DEL INTENT DE REPRODUCCIÓN ---
-        function renderGridItems(catName) {
+        // --- RENDERIZAR ELEMENTOS DE UNA CATEGORÍA ---
+        function renderItems(category) {
             const grid = document.getElementById('main-content-grid');
             grid.innerHTML = '';
 
-            const items = parsedM3U[catName] || [];
-
-            if (items.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--grey);">Sin elementos en esta categoría.</div>';
-                return;
-            }
-
-            items.forEach((item, idx) => {
+            let items = parsedM3U[category] || [];
+            
+            items.forEach((item, index) => {
                 let card = document.createElement('div');
-                card.className = currentAppMode === 'live' ? 'movie-card live-card nav-item' : 'movie-card nav-item';
+                card.className = 'movie-card nav-item ' + (currentAppMode === 'live' ? 'live-card' : '');
                 card.setAttribute('tabindex', '0');
-                
-                let imgHtml = '';
-                if (item.logo) {
-                    imgHtml = `<img src="${item.logo}" alt="${item.title}" onerror="handleImgError(this)" loading="lazy">`;
-                } else if (currentAppMode === 'live') {
-                    imgHtml = `<div class="neon-channel-box"><span class="neon-channel-text">${item.title}</span></div>`;
-                } else {
-                    imgHtml = `<div class="fallback-card">${item.title}</div>`;
-                }
 
+                let imgSrc = item.logo ? item.logo : 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+                
                 card.innerHTML = `
-                    ${imgHtml}
+                    <img src="${imgSrc}" onerror="handleImgError(this)" alt="${item.title}">
                     <div class="card-title-container">
                         <span class="card-title-text">${item.title}</span>
                     </div>
                 `;
 
-                // REQUISITO 1: Canal en vivo sin sinopsis
-                card.onclick = () => {
-                    if (currentAppMode === 'live') {
-                        // En modo en vivo reproducimos directamente, omitiendo el modal de sinopsis
-                        playStream(item.url);
-                    } else {
-                        // En películas o series mostramos el modal de sinopsis
-                        openModal(item, catName, idx);
-                    }
-                };
-
-                // Controles del modo editor
                 if (isEditorMode) {
                     let controls = document.createElement('div');
                     controls.className = 'editor-controls';
                     controls.innerHTML = `
-                        <button class="editor-btn" tabindex="0" onclick="event.stopPropagation(); editItem('${catName}', ${idx})"><i class="fas fa-edit"></i></button>
-                        <button class="editor-btn delete" tabindex="0" onclick="event.stopPropagation(); deleteItem('${catName}', ${idx})"><i class="fas fa-trash"></i></button>
+                        <button class="editor-btn nav-item" tabindex="0" onclick="event.stopPropagation(); openItemEditor('${category}', ${index})"><i class="fas fa-edit"></i></button>
+                        <button class="editor-btn delete nav-item" tabindex="0" onclick="event.stopPropagation(); deleteItem('${category}', ${index})"><i class="fas fa-trash"></i></button>
                     `;
                     card.appendChild(controls);
                 }
-                
+
+                card.onclick = () => openItemModal(item, category, index);
                 grid.appendChild(card);
             });
         }
+
+        function openItemEditor(category, index) {
+            let item = parsedM3U[category][index];
+            document.getElementById('item-title').value = item.title;
+            document.getElementById('item-logo').value = item.logo;
+            document.getElementById('item-url').value = item.url;
+            document.getElementById('item-original-cat').value = category;
+            document.getElementById('item-original-idx').value = index;
+            document.getElementById('item-editor-modal').style.display = 'flex';
+        }
+
+        async function saveItemEdit() {
+            let category = document.getElementById('item-original-cat').value;
+            let index = parseInt(document.getElementById('item-original-idx').value);
+            
+            parsedM3U[category][index].title = document.getElementById('item-title').value;
+            parsedM3U[category][index].logo = document.getElementById('item-logo').value;
+            parsedM3U[category][index].url = document.getElementById('item-url').value;
+
+            await saveM3UState();
+            closeItemEditor();
+            renderItems(category);
+        }
+
+        async function deleteItem(category, index) {
+            if (confirm("¿Estás seguro de eliminar este elemento permanentemente?")) {
+                parsedM3U[category].splice(index, 1);
+                await saveM3UState();
+                renderItems(category);
+            }
+        }
+
+        function handleImgError(img) {
+            if (img.src !== 'https://i.ibb.co/r2yTwzWd/1000348377.png') {
+                img.src = 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+            }
+        }
+
+        // ========================================================
+        // --- ABRIR MODAL Y LANZAR INTENT AL REPRODUCTOR EXTERNO ---
+        // ========================================================
+        function openItemModal(item, category, index) {
+            document.getElementById('m-title').innerText = item.title || 'Sin Título';
+            document.getElementById('m-poster').src = item.logo ? item.logo : 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+            
+            document.getElementById('m-meta-container').innerHTML = `<span class="smarters-badge azul">${category}</span>`;
+            document.getElementById('m-info-grid').innerHTML = `
+                <div class="info-grid-item">
+                    <span class="info-grid-label">Tipo:</span>
+                    <span class="info-grid-value">${currentAppMode.toUpperCase()}</span>
+                </div>
+            `;
+            document.getElementById('m-plot').innerText = 'Contenido listo para transmitir por red neuronal.\n\nServidor en línea.';
+
+            // Configurar el botón de reproducción con Android Intent
+            let playBtn = document.getElementById('m-play-btn');
+            playBtn.onclick = function() {
+                let videoUrl = item.url;
+                let cleanUrl = videoUrl.replace(/^https?:\/\//, '');
+                let scheme = videoUrl.startsWith('https') ? 'https' : 'http';
+                
+                // Estructura de Intent nativa y robusta para Android 
+                // Fuerza al sistema a lanzar el selector de reproductores externos (MX Player, VLC, etc.)
+                let intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=${scheme};type=video/*;end;`;
+                
+                window.location.href = intentUrl;
+            };
+
+            document.getElementById('modal-info').style.display = 'flex';
+            playBtn.focus(); // Auto-focus para el D-PAD (Android TV)
+        }
+
     </script>
 </body>
 </html>
-
 
