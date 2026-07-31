@@ -1750,6 +1750,34 @@
             document.getElementById('loader').style.display = 'none';
         }
 
+        // --- FETCH TMDB PARA INYECCIÓN ---
+        async function fetchTMDBData(title, mode) {
+            // Limpiar título de etiquetas m3u comunes para mejor búsqueda
+            let clean = title.replace(/\[.*?\]/g, '')
+                             .replace(/\(.*?\)/g, '')
+                             .replace(/(1080p|720p|4k|HD|SD|FHD|3D|Latino|Castellano|Sub|Dual|Ingles)/ig, '')
+                             .trim();
+            if(!clean) return null;
+            
+            const type = (mode === 'series') ? 'tv' : 'movie';
+            const searchUrl = `${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&language=es-ES&query=${encodeURIComponent(clean)}&page=1`;
+            
+            try {
+                let res = await fetch(searchUrl);
+                let data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    let topResult = data.results[0];
+                    // Llamar detalles completos
+                    let detailsUrl = `${TMDB_BASE_URL}/${type}/${topResult.id}?api_key=${TMDB_API_KEY}&language=es-ES&append_to_response=credits`;
+                    let detailsRes = await fetch(detailsUrl);
+                    return await detailsRes.json();
+                }
+            } catch (e) {
+                console.error("Error consultando TMDB:", e);
+            }
+            return null;
+        }
+
         // --- RENDERIZAR ELEMENTOS DE UNA CATEGORÍA ---
         function renderItems(category) {
             const grid = document.getElementById('main-content-grid');
@@ -1763,9 +1791,10 @@
                 card.setAttribute('tabindex', '0');
 
                 let imgSrc = item.logo ? item.logo : 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+                let imgId = `item-img-${index}`;
                 
                 card.innerHTML = `
-                    <img src="${imgSrc}" onerror="handleImgError(this)" alt="${item.title}">
+                    <img id="${imgId}" src="${imgSrc}" onerror="handleImgError(this)" alt="${item.title}">
                     <div class="card-title-container">
                         <span class="card-title-text">${item.title}</span>
                     </div>
@@ -1783,6 +1812,28 @@
 
                 card.onclick = () => openItemModal(item, category, index);
                 grid.appendChild(card);
+
+                // --- INYECCIÓN DE PÓSTERS TMDB EN EL GRID ---
+                if (currentAppMode === 'movie' || currentAppMode === 'series') {
+                    if (!item.tmdbData && !item.tmdbRequested) {
+                        item.tmdbRequested = true; // Evitar peticiones dobles
+                        // Staggering (retraso dinámico) para no bloquear la app con 500 llamadas simultáneas a TMDB
+                        setTimeout(() => { 
+                            fetchTMDBData(item.title, currentAppMode).then(data => {
+                                if (data) {
+                                    item.tmdbData = data;
+                                    if (data.poster_path) {
+                                        let imgEl = document.getElementById(imgId);
+                                        if (imgEl) imgEl.src = TMDB_IMAGE_BASE + data.poster_path;
+                                    }
+                                }
+                            });
+                        }, index * 80); 
+                    } else if (item.tmdbData && item.tmdbData.poster_path) {
+                        let imgEl = document.getElementById(imgId);
+                        if (imgEl) imgEl.src = TMDB_IMAGE_BASE + item.tmdbData.poster_path;
+                    }
+                }
             });
         }
 
@@ -1817,46 +1868,119 @@
             }
         }
 
-        function handleImgError(img) {
-            if (img.src !== 'https://i.ibb.co/r2yTwzWd/1000348377.png') {
-                img.src = 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+        // --- LÓGICA DEL MODAL DE INFORMACIÓN DETALLADA E INTENT AL REPRODUCTOR EXTERNO ---
+        async function openItemModal(item, category, index) {
+            // Valores iniciales
+            document.getElementById('m-title').innerText = item.title;
+            const mPoster = document.getElementById('m-poster');
+            mPoster.src = item.logo || 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+            document.getElementById('m-plot').innerText = "Cargando sinopsis y detalles desde los servidores...";
+            document.getElementById('m-meta-container').innerHTML = '';
+            document.getElementById('m-info-grid').innerHTML = '';
+            
+            // --- NUEVO: ASIGNAR ACCIÓN DE PLAY (INTENTS DE ANDROID) ---
+            document.getElementById('m-play-btn').onclick = () => {
+                const videoUrl = item.url;
+                
+                if (!videoUrl) {
+                    alert("No hay una URL válida para reproducir.");
+                    return;
+                }
+
+                // Limpiar la URL para adaptar al intent
+                const urlWithoutProtocol = videoUrl.replace(/^https?:\/\//i, '');
+                const scheme = videoUrl.toLowerCase().startsWith('https') ? 'https' : 'http';
+                
+                // Intent nativo de Android (abrirá el cuadro de diálogo para elegir MX Player, VLC, etc.)
+                const intentUrl = `intent://${urlWithoutProtocol}#Intent;action=android.intent.action.VIEW;scheme=${scheme};type=video/*;end;`;
+                
+                try {
+                    window.location.href = intentUrl;
+                } catch (e) {
+                    alert("Tu dispositivo no soporta el lanzamiento de reproductores externos desde el navegador o no tienes uno instalado.");
+                }
+            };
+            // -----------------------------------------------------------
+
+            // Mostrar el modal y enfocar el play
+            document.getElementById('modal-info').style.display = 'flex';
+            setTimeout(() => document.getElementById('m-play-btn').focus(), 100);
+
+            // Cargar datos TMDB
+            let data = item.tmdbData;
+            
+            if (!data && (currentAppMode === 'movie' || currentAppMode === 'series')) {
+                 data = await fetchTMDBData(item.title, currentAppMode);
+                 item.tmdbData = data; 
+            }
+
+            if (data) {
+                // Póster en Modal
+                if (data.poster_path) mPoster.src = TMDB_IMAGE_BASE + data.poster_path;
+                
+                // Fondo Modal Dinámico (Backdrop)
+                if (data.backdrop_path) {
+                    const modalContent = document.querySelector('.modal-content');
+                    modalContent.style.backgroundImage = `radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), rgba(5,5,7,0.9) 70%), url('${TMDB_BACKDROP_BASE + data.backdrop_path}')`;
+                    modalContent.style.backgroundSize = 'cover';
+                    modalContent.style.backgroundPosition = 'top right';
+                } else {
+                    document.querySelector('.modal-content').style.backgroundImage = 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), transparent), var(--netflix-black)';
+                }
+
+                // Título original detectado
+                document.getElementById('m-title').innerText = data.title || data.name || item.title;
+
+                // Sinopsis Oficial
+                document.getElementById('m-plot').innerText = data.overview || "No hay sinopsis disponible en español para este título.";
+
+                // Insignias Superiores (Meta Data)
+                let year = (data.release_date || data.first_air_date || '').substring(0, 4);
+                let rating = data.vote_average ? data.vote_average.toFixed(1) : false;
+                let runtime = data.runtime;
+                let seasons = data.number_of_seasons;
+
+                let metaHTML = '';
+                if(rating) metaHTML += `<span class="smarters-badge azul"><i class="fas fa-star" style="color:#f5c518"></i> ${rating}</span>`;
+                if(year) metaHTML += `<span class="smarters-badge">${year}</span>`;
+                if(runtime) metaHTML += `<span class="smarters-badge">${runtime} min</span>`;
+                if(seasons) metaHTML += `<span class="smarters-badge">${seasons} Temporadas</span>`;
+                
+                document.getElementById('m-meta-container').innerHTML = metaHTML;
+
+                // Información Tabular (Grid Informativo)
+                let infoHTML = '';
+                if(data.genres && data.genres.length > 0) {
+                    infoHTML += `<div class="info-grid-item"><span class="info-grid-label">Género:</span><span class="info-grid-value">${data.genres.map(g => g.name).join(', ')}</span></div>`;
+                }
+                
+                if(data.credits) {
+                    if (data.credits.crew) {
+                        let director = data.credits.crew.find(c => c.job === 'Director');
+                        if(director) {
+                            infoHTML += `<div class="info-grid-item"><span class="info-grid-label">Director:</span><span class="info-grid-value">${director.name}</span></div>`;
+                        }
+                    }
+                    if (data.credits.cast && data.credits.cast.length > 0) {
+                        let cast = data.credits.cast.slice(0, 5).map(c => c.name).join(', ');
+                        infoHTML += `<div class="info-grid-item"><span class="info-grid-label">Reparto:</span><span class="info-grid-value">${cast}</span></div>`;
+                    }
+                }
+
+                document.getElementById('m-info-grid').innerHTML = infoHTML;
+            } else {
+                // Modo TV en Vivo o Fallback (No se halló info en TMDB)
+                document.querySelector('.modal-content').style.backgroundImage = 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), transparent), var(--netflix-black)';
+                document.getElementById('m-plot').innerText = (currentAppMode === 'live') ? "Transmisión en directo en la red." : "Información extendida no disponible en la base de datos central.";
             }
         }
 
-        // ========================================================
-        // --- ABRIR MODAL Y LANZAR INTENT AL REPRODUCTOR EXTERNO ---
-        // ========================================================
-        function openItemModal(item, category, index) {
-            document.getElementById('m-title').innerText = item.title || 'Sin Título';
-            document.getElementById('m-poster').src = item.logo ? item.logo : 'https://i.ibb.co/r2yTwzWd/1000348377.png';
-            
-            document.getElementById('m-meta-container').innerHTML = `<span class="smarters-badge azul">${category}</span>`;
-            document.getElementById('m-info-grid').innerHTML = `
-                <div class="info-grid-item">
-                    <span class="info-grid-label">Tipo:</span>
-                    <span class="info-grid-value">${currentAppMode.toUpperCase()}</span>
-                </div>
-            `;
-            document.getElementById('m-plot').innerText = 'Contenido listo para transmitir por red neuronal.\n\nServidor en línea.';
-
-            // Configurar el botón de reproducción con Android Intent
-            let playBtn = document.getElementById('m-play-btn');
-            playBtn.onclick = function() {
-                let videoUrl = item.url;
-                let cleanUrl = videoUrl.replace(/^https?:\/\//, '');
-                let scheme = videoUrl.startsWith('https') ? 'https' : 'http';
-                
-                // Estructura de Intent nativa y robusta para Android 
-                // Fuerza al sistema a lanzar el selector de reproductores externos (MX Player, VLC, etc.)
-                let intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=${scheme};type=video/*;end;`;
-                
-                window.location.href = intentUrl;
-            };
-
-            document.getElementById('modal-info').style.display = 'flex';
-            playBtn.focus(); // Auto-focus para el D-PAD (Android TV)
+        // --- COMPLETAR FALLBACK DE IMÁGENES ---
+        function handleImgError(img) {
+            if (!img.src.includes('1000348377.png')) {
+                img.src = 'https://i.ibb.co/r2yTwzWd/1000348377.png';
+            }
         }
-
     </script>
 </body>
 </html>
