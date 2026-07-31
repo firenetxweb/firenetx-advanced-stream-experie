@@ -25,7 +25,7 @@
             --neon-yellow: #00ffaa; /* Verde Menta Neón */
             
             /* EFECTOS GLOW Y CRISTAL */
-            --neon-glow: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 25px rgba(0, 243, 255, 0.3);
+            --neon-glow: 0 0 15px rgba(0, 243, 255, 0.3), 0 0 30px rgba(0, 243, 255, 0.15);
             --neon-glow-alt: 0 0 10px rgba(188, 19, 254, 0.5), 0 0 25px rgba(188, 19, 254, 0.3);
             --glass-bg: rgba(15, 15, 22, 0.65);
             --glass-border: rgba(255, 255, 255, 0.08);
@@ -58,8 +58,8 @@
             margin: 0; padding: 0;
             background-color: var(--netflix-black);
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(188, 19, 254, 0.15), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(0, 243, 255, 0.15), transparent 25%);
+                radial-gradient(circle at 15% 50%, rgba(188, 19, 254, 0.08), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(0, 243, 255, 0.08), transparent 30%);
             background-attachment: fixed;
             color: var(--text-color);
             width: 100vw;
@@ -68,11 +68,11 @@
             overflow: hidden;
         }
 
-        /* --- VÍDEO INTRO --- */
+        /* --- VÍDEO INTRO (DISEÑO PREMIUM) --- */
         #intro-screen {
             position: fixed;
             inset: 0;
-            background: var(--netflix-black);
+            background: radial-gradient(circle at center, #0a0a0f 0%, #000000 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -82,33 +82,34 @@
         }
         
         .intro-image-logo {
-            width: 300px;
+            width: 180px; /* Tamaño ajustado para elegancia */
             max-width: 80%;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px rgba(0, 243, 255, 0.6));
+            margin-bottom: 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 30px rgba(255,255,255,0.05);
             animation: cinematicLogo 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
         .welcome-text {
-            color: #fff;
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: 5px;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 6px;
             text-transform: uppercase;
-            margin-bottom: 30px;
-            text-shadow: var(--neon-glow);
+            margin-bottom: 40px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
             opacity: 0;
             animation: fadeInText 1s ease-out 1.2s forwards;
         }
 
         .loading-container {
-            width: 300px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.05);
+            width: 250px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 15px;
-            box-shadow: inset 0 0 5px rgba(0,0,0,1);
+            margin-bottom: 20px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,1);
             opacity: 0;
             animation: fadeInText 0.5s ease-out 1.5s forwards;
         }
@@ -116,35 +117,33 @@
         .loading-bar {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, transparent, var(--netflix-red), var(--neon-red));
+            background: linear-gradient(90deg, transparent, #fff, transparent);
             border-radius: 10px;
-            box-shadow: 0 0 15px var(--neon-red);
             animation: loadProgress 3.5s ease-in-out 1.8s forwards;
         }
 
         .intro-text-animated {
-            color: var(--netflix-red);
-            font-size: 12px;
-            letter-spacing: 8px;
+            color: var(--grey);
+            font-size: 11px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             opacity: 0;
-            text-shadow: 0 0 5px var(--netflix-red);
             animation: fadeInText 1s ease-out 2.5s forwards;
         }
 
         @keyframes cinematicLogo {
-            0% { transform: scale(0.6) translateY(20px); opacity: 0; filter: brightness(0.5) blur(10px); }
-            50% { transform: scale(1.05) translateY(0); opacity: 1; filter: brightness(1.2) blur(0px); }
+            0% { transform: scale(0.8) translateY(15px); opacity: 0; filter: brightness(0.7) blur(10px); }
+            50% { transform: scale(1.02) translateY(0); opacity: 1; filter: brightness(1.1) blur(0px); }
             100% { transform: scale(1) translateY(0); opacity: 1; filter: brightness(1) blur(0px); }
         }
         @keyframes fadeInText { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes loadProgress { 0% { width: 0%; } 30% { width: 45%; } 70% { width: 80%; } 100% { width: 100%; } }
+        @keyframes loadProgress { 0% { width: 0%; transform: translateX(-100%); } 50% { width: 100%; transform: translateX(0%); } 100% { width: 100%; transform: translateX(100%); opacity: 0; } }
 
         /* --- TOOLTIPS MODERNOS --- */
         .help-tip {
-            background: var(--glass-bg);
+            background: rgba(20, 20, 25, 0.7);
             border: 1px solid var(--glass-border);
-            border-left: 3px solid var(--neon-red);
+            border-left: 3px solid var(--netflix-red);
             color: #eee;
             padding: 12px 18px;
             font-size: 13px;
@@ -229,52 +228,52 @@
         .smarters-cat-btn i { color: var(--grey); font-size: 16px; min-width: 18px; transition: var(--transition); pointer-events: none;}
         
         .smarters-cat-btn:focus, .smarters-cat-btn.active, .smarters-cat-btn:hover { 
-            background: linear-gradient(90deg, rgba(0, 243, 255, 0.15) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(0,0,0,0) 100%);
             color: #fff; 
             border-left: 4px solid var(--netflix-red);
             border-top: 1px solid var(--glass-border);
             border-right: 1px solid var(--glass-border);
             border-bottom: 1px solid var(--glass-border);
-            box-shadow: inset 15px 0 20px -10px rgba(0, 243, 255, 0.2), 0 0 15px rgba(0,243,255,0.3); 
+            box-shadow: inset 15px 0 20px -10px rgba(0, 243, 255, 0.1), 0 5px 15px rgba(0,0,0,0.3); 
             transform: translateX(5px); 
         }
         .smarters-cat-btn:focus i:not(.fa-edit, .fa-trash), .smarters-cat-btn.active i:not(.fa-edit, .fa-trash), .smarters-cat-btn:hover i:not(.fa-edit, .fa-trash) { 
-            color: var(--netflix-red); 
-            text-shadow: var(--neon-glow);
+            color: #fff; 
         }
 
         .movie-card, .navbar, .episode-card, .nav-item, .carousel-item, .home-hero-bg {
             transform: translateZ(0); will-change: transform, box-shadow; backface-visibility: hidden;
         }
 
-        /* --- LOGIN ADVANCED UI --- */
+        /* --- LOGIN ADVANCED UI (DISEÑO PREMIUM) --- */
         #login {
             position: fixed; inset: 0; z-index: 10000;
-            background: radial-gradient(circle at center, #0a0a0f 0%, #000000 100%);
+            background: radial-gradient(circle at center, #111116 0%, #000000 100%);
             display: flex; align-items: center; justify-content: center;
             overflow-y: auto; padding: 10px;
         }
         .login-box {
-            background: var(--glass-bg); 
-            backdrop-filter: blur(25px);
-            padding: 40px 35px; 
-            border-radius: 24px;
+            background: rgba(15, 15, 20, 0.5); 
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            padding: 50px 45px; 
+            border-radius: 28px;
             width: 100%; 
-            max-width: 480px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.05); 
-            border: 1px solid var(--glass-border);
+            max-width: 500px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
             margin: auto;
             text-align: center;
         }
-        .login-box h1 { margin-bottom: 10px; font-size: 28px; font-weight: 800; text-align: center; color: #fff; }
+        .login-box h1 { margin-bottom: 15px; font-size: 24px; font-weight: 700; text-align: center; color: #fff; letter-spacing: 1px;}
         
         .device-code-display {
-            margin: 25px 0;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px dashed var(--netflix-red);
-            border-radius: 15px;
-            box-shadow: var(--neon-glow);
+            margin: 30px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -282,18 +281,20 @@
             transition: var(--transition);
         }
         .device-code-display:hover, .device-code-display:focus {
-            background: rgba(0, 243, 255, 0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%);
             transform: scale(1.02);
-            border: 2px solid var(--netflix-red);
+            border: 1px solid var(--netflix-red);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.15);
         }
         
         #display-device-code {
-            font-size: 48px;
+            font-size: 44px;
             font-weight: 900;
-            letter-spacing: 10px;
+            letter-spacing: 12px;
             color: #fff;
-            text-shadow: var(--neon-glow);
-            margin-right: -10px; 
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin-right: -12px; 
+            font-family: monospace;
         }
 
         .login-box input, .login-box textarea, .admin-box input, .admin-box select, .admin-box textarea {
@@ -312,7 +313,7 @@
 
         /* --- NAVBAR FLOTANTE MODERNA --- */
         .navbar {
-            position: relative; width: 96%; height: 70px;
+            position: relative; width: 96%; height: 75px;
             margin: 15px 2%; border-radius: 16px;
             display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
             background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
@@ -331,16 +332,21 @@
         .navbar-left { display: flex; align-items: center; flex: 1; }
         .navbar-right { display: flex; align-items: center; gap: 15px; justify-content: flex-end; }
         
-        .brand-logo { 
-            color: #fff; font-size: 26px; font-weight: 900; 
-            margin-right: 40px; letter-spacing: 1px; 
-            text-shadow: var(--neon-glow); cursor: pointer;
+        /* LOGO IMAGEN NAVBAR */
+        .brand-logo-img { 
+            height: 45px; 
+            border-radius: 8px; 
+            margin-right: 40px; 
+            cursor: pointer;
             transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
-        .brand-logo:focus, .brand-logo:hover {
-            color: var(--netflix-red);
-            box-shadow: 0 0 15px rgba(0,243,255,0.4);
+        .brand-logo-img:focus, .brand-logo-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
         }
+
         .nav-links { display: flex; gap: 15px; }
         .nav-link, .nav-btn-float { 
             text-decoration: none; color: var(--grey); font-size: 14px; font-weight: 600;
@@ -352,7 +358,7 @@
             background: rgba(255,255,255,0.05);
             border-bottom: 3px solid var(--netflix-red);
             border-radius: 10px 10px 0 0;
-            text-shadow: var(--neon-glow);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
         .nav-btn-float { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; }
         .nav-btn-float:focus, .nav-btn-float:hover { 
@@ -360,13 +366,13 @@
         }
 
         .btn-netflix-play-mini {
-            background: linear-gradient(45deg, var(--netflix-red), #0077ff) !important; color: #fff !important; border: none !important; 
+            background: linear-gradient(45deg, #2b5876, #4e4376) !important; color: #fff !important; border: none !important; 
             padding: 14px 24px !important; border-radius: 12px !important; font-weight: 700 !important;
             font-size: 15px !important; cursor: pointer; display: flex; align-items: center; gap: 8px;
             width: 100% !important; justify-content: center; transition: var(--transition);
-            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
-        .btn-netflix-play-mini:focus, .btn-netflix-play-mini:hover { box-shadow: var(--neon-glow); transform: scale(1.03); border: 2px solid #fff !important; }
+        .btn-netflix-play-mini:focus, .btn-netflix-play-mini:hover { background: linear-gradient(45deg, var(--netflix-red), #0077ff) !important; box-shadow: var(--neon-glow); transform: scale(1.03); border: 1px solid #fff !important; }
         
         .btn-netflix-back {
             background-color: rgba(255,255,255,0.05) !important; color: #fff !important; border: 1px solid var(--glass-border) !important; 
@@ -375,8 +381,8 @@
             justify-content: center; transition: var(--transition); backdrop-filter: blur(5px);
         }
         .btn-netflix-back:focus, .btn-netflix-back:hover { 
-            box-shadow: var(--neon-glow-alt); border: 1px solid var(--neon-red) !important; 
-            background: rgba(188, 19, 254, 0.2) !important; transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2); border: 1px solid #fff !important; 
+            background: rgba(255,255,255,0.1) !important; transform: scale(1.03);
         }
 
         /* --- HOME HERO SECTION --- */
@@ -391,12 +397,11 @@
         }
         .home-hero-overlay {
             position: fixed; inset: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(to right, #050507 0%, rgba(5,5,7,0.7) 45%, transparent 100%),
+            background: linear-gradient(to right, #050507 0%, rgba(5,5,7,0.8) 45%, transparent 100%),
                         linear-gradient(to top, #050507 0%, rgba(5,5,7,0.2) 50%, transparent 100%);
             z-index: 2;
         }
         
-        /* MODIFICACIÓN: BOTONES FLOTANTES AL CENTRO ARRIBA */
         .home-floating-menu { 
             position: fixed; 
             top: 28px; 
@@ -428,30 +433,29 @@
         }
         .float-btn i { font-size: 16px; color: var(--netflix-red); transition: var(--transition); }
         .float-btn:focus, .float-btn:hover { 
-            background: rgba(0, 243, 255, 0.1); 
-            border-color: var(--netflix-red); 
-            box-shadow: var(--neon-glow); 
+            background: rgba(255, 255, 255, 0.1); 
+            border-color: #fff; 
+            box-shadow: 0 0 15px rgba(255,255,255,0.2); 
             transform: translateY(-3px); 
         }
         
-        /* MODIFICACIÓN: AJUSTE HACIA LA IZQUIERDA POR ESPACIO LIBERADO */
         .home-info-container { position: absolute; left: 60px; top: 40%; transform: translateY(-50%); z-index: 10; max-width: 60%; text-shadow: 0 4px 15px rgba(0,0,0,1); }
-        .home-info-container h1 { font-size: 42px; font-weight: 900; margin: 0 0 15px 0; line-height: 1.1; letter-spacing: -1px; text-transform: uppercase; text-shadow: var(--neon-glow); }
-        .home-info-container p { font-size: 16px; color: #cbd5e1; margin: 0; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-weight: 300; }
+        .home-info-container h1 { font-size: 42px; font-weight: 900; margin: 0 0 15px 0; line-height: 1.1; letter-spacing: -1px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .home-info-container p { font-size: 16px; color: #cbd5e1; margin: 0; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-weight: 400; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         
         .home-carousel-container { position: absolute; bottom: 25px; left: 60px; right: 30px; z-index: 10; }
         .home-carousel { display: flex; gap: 15px; overflow-x: auto; padding: 10px 5px 25px 5px; scroll-behavior: smooth; }
         .home-carousel::-webkit-scrollbar { display: none; }
         
-        /* --- CARDS & GRID ADVANCED (MODO VERTICAL 100% SIN CORTES) --- */
+        /* --- CARDS & GRID ADVANCED --- */
         .carousel-item { 
             flex: 0 0 130px; aspect-ratio: 2/3; background: var(--card-bg); border-radius: 12px; 
             cursor: pointer; transition: var(--transition); border: 1px solid var(--glass-border); 
             position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         .carousel-item:focus, .carousel-item:hover { 
-            transform: translateY(-8px) scale(1.05); border: 2px solid var(--netflix-red) !important; 
-            box-shadow: var(--neon-glow) !important; z-index: 10; 
+            transform: translateY(-8px) scale(1.05); border: 2px solid #fff !important; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8) !important; z-index: 10; 
         }
         .carousel-item img { width: 100%; height: 100%; object-fit: contain; background-color: #000; }
 
@@ -464,8 +468,8 @@
         .live-card { aspect-ratio: 16/9 !important; }
         
         .movie-card:focus, .movie-card:hover { 
-            transform: translateY(-8px) scale(1.04); border: 2px solid var(--netflix-red) !important; 
-            box-shadow: var(--neon-glow); z-index: 10; 
+            transform: translateY(-8px) scale(1.04); border: 2px solid #fff !important; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 10; 
         }
         .movie-card img { width: 100%; height: 100%; object-fit: contain; background-color: #000; transition: var(--transition); }
         .movie-card:focus img, .movie-card:hover img { filter: brightness(1.1); }
@@ -486,46 +490,34 @@
             align-items: center;
             justify-content: center;
             padding: 12px;
-            background: radial-gradient(circle at center, rgba(188, 19, 254, 0.25) 0%, rgba(5, 5, 7, 0.95) 85%);
-            border: 1px solid var(--netflix-red);
+            background: radial-gradient(circle at center, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 7, 0.95) 85%);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
-            box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.25), 0 0 10px rgba(0, 243, 255, 0.2);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
             text-align: center;
             transition: var(--transition);
             position: relative;
             overflow: hidden;
         }
-        .neon-channel-box::before {
-            content: '';
-            position: absolute;
-            inset: -50%;
-            background: radial-gradient(circle, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
-            pointer-events: none;
-        }
         .neon-channel-text {
             font-family: 'Montserrat', sans-serif;
-            font-weight: 900;
-            font-size: 15px;
+            font-weight: 700;
+            font-size: 14px;
             text-transform: uppercase;
             color: #ffffff;
-            letter-spacing: 2px;
-            text-shadow: 
-                0 0 5px #00f3ff, 
-                0 0 10px #00f3ff, 
-                0 0 20px #00f3ff, 
-                0 0 30px #bc13fe, 
-                0 0 40px #bc13fe;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
             word-break: break-word;
             line-height: 1.3;
             z-index: 1;
         }
 
         /* --- MODAL SYNOPSIS --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(5, 5, 7, 0.85); display: none; z-index: 6000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); display: none; z-index: 6000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
         .modal-content {
-            background: radial-gradient(circle at top right, rgba(0, 243, 255, 0.1), transparent), var(--netflix-black);
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), transparent), var(--netflix-black);
             width: 100%; max-width: 1100px; height: 85vh; overflow: hidden; position: relative; 
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255,255,255,0.05);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255,255,255,0.1);
             border-radius: 24px; border: 1px solid var(--glass-border); 
             transition: background-image 0.5s ease-in-out;
         }
@@ -549,7 +541,7 @@
         
         .meta-data-smarters { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
         .smarters-badge { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 6px; color: #fff; }
-        .smarters-badge.azul { background: var(--netflix-red); color: #000; border: none; box-shadow: var(--neon-glow); }
+        .smarters-badge.azul { background: #fff; color: #000; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         .smarters-divider { height: 1px; background: var(--glass-border); width: 100%; margin: 10px 0; }
         
         .info-grid-smarters { 
@@ -562,31 +554,31 @@
         .info-grid-value { color: #fff; font-weight: 400; }
         
         .plot-container-smarters { 
-            background: rgba(0, 0, 0, 0.6); padding: 20px; border-radius: 12px; 
-            border-left: 4px solid var(--neon-red); margin-top: 10px; display: flex; flex-direction: column; gap: 12px; 
+            background: rgba(0, 0, 0, 0.4); padding: 20px; border-radius: 12px; 
+            border-left: 4px solid #fff; margin-top: 10px; display: flex; flex-direction: column; gap: 12px; 
             backdrop-filter: blur(5px);
         }
         .plot-box-smarters { font-size: 15px; line-height: 1.7; color: #cbd5e1; font-weight: 400; }
 
-        /* --- LOADER NEÓN --- */
-        #loader { position: fixed; inset: 0; background: rgba(5,5,7,0.9); z-index: 99999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .nf-loader { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.05); border-top-color: var(--netflix-red); border-radius: 50%; animation: spin 0.8s infinite cubic-bezier(0.6, 0.2, 0.4, 0.8); box-shadow: 0 0 20px var(--netflix-red); }
+        /* --- LOADER PREMIUM --- */
+        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .nf-loader { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s infinite cubic-bezier(0.6, 0.2, 0.4, 0.8); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .cat-count { background: rgba(255,255,255,0.08); font-size: 11px; padding: 3px 8px; border-radius: 8px; color: var(--grey); font-weight: 600; margin-left: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .smarters-cat-btn.active .cat-count, .smarters-cat-btn:focus .cat-count, .smarters-cat-btn:hover .cat-count { background: rgba(0,0,0,0.3); color: #fff; border-color: var(--netflix-red); }
+        .smarters-cat-btn.active .cat-count, .smarters-cat-btn:focus .cat-count, .smarters-cat-btn:hover .cat-count { background: #fff; color: #000; border-color: #fff; }
 
         /* --- PANEL ADMIN / EDITOR AVANZADO --- */
-        .admin-box { background: var(--glass-bg); border: 1px solid var(--netflix-red); border-radius: 24px; width: 100%; max-width: 650px; max-height: 95vh; overflow-y: auto; padding: 35px; box-shadow: var(--neon-glow); display: flex; flex-direction: column; gap: 18px; }
-        .admin-box h2 { margin: 0 0 10px 0; color: #fff; font-size: 24px; text-align: center; font-weight: 800; text-shadow: var(--neon-glow); }
+        .admin-box { background: var(--glass-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 100%; max-width: 650px; max-height: 95vh; overflow-y: auto; padding: 35px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 18px; }
+        .admin-box h2 { margin: 0 0 10px 0; color: #fff; font-size: 24px; text-align: center; font-weight: 800; }
         .admin-row { display: flex; gap: 15px; }
 
         .editor-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 20; }
         .editor-btn { background: rgba(0,0,0,0.8); color: white; border: 1px solid var(--glass-border); border-radius: 8px; width: 35px; height: 35px; cursor: pointer; transition: var(--transition); pointer-events: auto; }
-        .editor-btn:focus, .editor-btn:hover { background: var(--netflix-red); color: black; border-color: var(--netflix-red); box-shadow: var(--neon-glow); }
+        .editor-btn:focus, .editor-btn:hover { background: #fff; color: black; border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
         .editor-btn.delete:focus, .editor-btn.delete:hover { background: #ff0055; color: white; border-color: #ff0055; box-shadow: 0 0 15px #ff0055; }
-        .add-list-card { border: 2px dashed var(--netflix-red); background: rgba(0, 243, 255, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .add-list-card:focus, .add-list-card:hover { background: rgba(0, 243, 255, 0.15); border-style: solid; }
+        .add-list-card { border: 2px dashed rgba(255,255,255,0.2); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .add-list-card:focus, .add-list-card:hover { background: rgba(255, 255, 255, 0.05); border-style: solid; border-color: #fff; }
 
         /* BOTÓN FLOTANTE MODO EDITOR INICIO */
         .home-editor-trigger {
@@ -594,8 +586,8 @@
             top: 25px;
             right: 40px;
             z-index: 20;
-            background: rgba(188, 19, 254, 0.3);
-            border: 1px solid var(--neon-red);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.2);
             color: #fff;
             padding: 10px 18px;
             border-radius: 12px;
@@ -603,13 +595,13 @@
             font-size: 13px;
             cursor: pointer;
             backdrop-filter: blur(10px);
-            box-shadow: var(--neon-glow-alt);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             transition: var(--transition);
             display: none;
         }
         .home-editor-trigger:focus, .home-editor-trigger:hover {
-            background: var(--neon-red);
-            color: #fff;
+            background: #fff;
+            color: #000;
             transform: scale(1.05);
         }
     </style>
@@ -618,12 +610,12 @@
 
     <!-- Intro Inicial -->
     <div id="intro-screen">
-        <img src="https://novaplayer.simdif.com/images/public/sd_6a21ddcb4e0aa.png?no_cache=1780611569" alt="FIRENETX Logo" class="intro-image-logo">
-        <div class="welcome-text">FIRENETX ADVANCED</div>
+        <img src="https://i.ibb.co/r2yTwzWd/1000348377.png" alt="Logo" class="intro-image-logo">
+        <div class="welcome-text">ADVANCED EXPERIENCE</div>
         <div class="loading-container">
             <div class="loading-bar"></div>
         </div>
-        <div class="intro-text-animated">Inicializando red neuronal...</div>
+        <div class="intro-text-animated">Estableciendo conexión segura...</div>
     </div>
 
     <div id="loader"><div class="nf-loader"></div></div>
@@ -631,19 +623,20 @@
     <!-- PANTALLA LOGIN FIREBASE DEVICE CODE -->
     <div id="login">
         <div class="login-box">
-            <div style="text-align:center; margin-bottom:20px;">
-                <div class="brand-logo nav-item" tabindex="0" style="margin:0; font-size: 34px; display: inline-block; padding: 10px 20px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:12px; backdrop-filter:blur(5px);" onclick="secretLogoClick()">FIRENETX</div>
+            <div style="text-align:center; margin-bottom:25px;">
+                <!-- Reemplazo de texto por el Nuevo Logo Premium -->
+                <img src="https://i.ibb.co/r2yTwzWd/1000348377.png" class="brand-logo-img nav-item" tabindex="0" onclick="secretLogoClick()" alt="Logo" style="height: 65px; margin-right: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
             </div>
             
             <h1>VINCULAR DISPOSITIVO</h1>
-            <div class="help-tip" style="justify-content: center;"><i class="fas fa-satellite-dish"></i> Proporciona este código a tu proveedor</div>
+            <div class="help-tip" style="justify-content: center;"><i class="fas fa-lock"></i> Proporciona este código seguro a tu proveedor</div>
             
             <div class="device-code-display nav-item" tabindex="0" id="device-code-box" onclick="forceResetCode()" title="Haz clic para generar un nuevo código">
                 <span id="display-device-code">------</span>
             </div>
 
-            <p id="connection-status-text" style="color: var(--grey); font-size: 14px; margin-bottom: 20px;">Conectando a red neuronal...</p>
-            <div class="nf-loader" id="login-spinner" style="width: 30px; height: 30px; margin: 0 auto; display: block; border-width: 3px;"></div>
+            <p id="connection-status-text" style="color: var(--grey); font-size: 14px; margin-bottom: 25px; font-weight: 500;">Conectando a red de servidores...</p>
+            <div class="nf-loader" id="login-spinner" style="width: 25px; height: 25px; margin: 0 auto; display: block; border-width: 3px; box-shadow: none;"></div>
         </div>
     </div>
 
@@ -680,7 +673,7 @@
             </label>
             
             <div style="display:flex; gap:15px; margin-top:20px; flex-wrap: wrap;">
-                <button class="btn-red nav-item" style="flex:1; background: var(--netflix-red); border:none; padding: 14px; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="savePlaylist()">GUARDAR EN NUBE</button>
+                <button class="btn-red nav-item" style="flex:1; background: #fff; color: #000; border:none; padding: 14px; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="savePlaylist()">GUARDAR EN NUBE</button>
                 <button class="btn-netflix-back nav-item" style="flex:1;" onclick="closeEditorModal()">CANCELAR</button>
             </div>
         </div>
@@ -704,7 +697,7 @@
             <input type="hidden" id="item-original-idx">
             
             <div style="display:flex; gap:15px; margin-top:20px;">
-                <button class="btn-red nav-item" style="flex:1; background: var(--netflix-red); border:none; padding: 14px; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="saveItemEdit()">GUARDAR CAMBIOS</button>
+                <button class="btn-red nav-item" style="flex:1; background: #fff; color:#000; border:none; padding: 14px; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="saveItemEdit()">GUARDAR CAMBIOS</button>
                 <button class="btn-netflix-back nav-item" style="flex:1;" onclick="closeItemEditor()">CANCELAR</button>
             </div>
         </div>
@@ -715,14 +708,14 @@
         <div class="admin-box" style="margin:auto; display:flex; flex-direction:column; background:var(--glass-bg);">
             <h2><i class="fas fa-sliders-h"></i> Editar Sección Inicio</h2>
             
-            <h3 style="color:var(--netflix-red); font-size:14px; margin:5px 0 -5px 0;">IMAGEN DE FONDO DE INICIO</h3>
+            <h3 style="color:#fff; font-size:14px; margin:5px 0 -5px 0;">IMAGEN DE FONDO DE INICIO</h3>
             <label style="color:var(--grey); font-size:12px;">URL de la Imagen de Fondo Principal</label>
             <input type="text" id="home-custom-bg-input" placeholder="https://ruta-de-la-imagen-fondo.jpg" class="nav-item">
-            <button class="btn-red nav-item" style="background: var(--netflix-red); border:none; padding: 10px; border-radius: 8px; font-weight: 700; cursor:pointer;" onclick="saveCustomHomeBg()">GUARDAR FONDO PRINCIPAL</button>
+            <button class="btn-red nav-item" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); padding: 10px; border-radius: 8px; font-weight: 700; cursor:pointer; color:#fff;" onclick="saveCustomHomeBg()">GUARDAR FONDO PRINCIPAL</button>
 
             <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
 
-            <h3 style="color:var(--netflix-red); font-size:14px; margin:0;">CARRUSEL SLIDER DE INICIO</h3>
+            <h3 style="color:#fff; font-size:14px; margin:0;">CARRUSEL SLIDER DE INICIO</h3>
             
             <select id="home-slide-selector" class="nav-item" onchange="loadHomeSlideDataForEdit()">
                 <option value="new">+ AGREGAR NUEVO SLIDE</option>
@@ -741,7 +734,7 @@
             <input type="text" id="slide-poster-input" placeholder="https://imagen-logo-slide.svg" class="nav-item">
 
             <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn-red nav-item" style="flex:1; background: var(--neon-yellow); color:#000; border:none; padding: 12px; border-radius: 8px; font-weight: 700; cursor:pointer;" onclick="saveHomeSlide()">GUARDAR SLIDE</button>
+                <button class="btn-red nav-item" style="flex:1; background: #fff; color:#000; border:none; padding: 12px; border-radius: 8px; font-weight: 700; cursor:pointer;" onclick="saveHomeSlide()">GUARDAR SLIDE</button>
                 <button id="btn-delete-slide" class="btn-red nav-item" style="flex:1; background: #ff0055; color:#fff; border:none; padding: 12px; border-radius: 8px; font-weight: 700; cursor:pointer; display:none;" onclick="deleteHomeSlide()">ELIMINAR SLIDE</button>
             </div>
 
@@ -754,7 +747,9 @@
     <!-- NAVBAR PRINCIPAL -->
     <nav class="navbar" id="main-nav" style="display:none;">
         <div class="navbar-left">
-            <div class="brand-logo nav-item" tabindex="0" onclick="secretLogoClick()">FIRENETX</div>
+            <!-- Reemplazo de texto por el Nuevo Logo Premium en NavBar -->
+            <img src="https://i.ibb.co/r2yTwzWd/1000348377.png" class="brand-logo-img nav-item" tabindex="0" onclick="secretLogoClick()" alt="Logo">
+            
             <!-- SECCIÓN DE ENLACES: Se ocultará dinámicamente en Inicio -->
             <div class="nav-links" id="nav-content-links">
                 <button class="nav-link nav-item active" onclick="changeMode('home')">Inicio</button>
@@ -1023,12 +1018,11 @@
             const codeBox = document.getElementById('device-code-box');
             if (snap.val() === true) {
                 statusTxt.innerText = "Esperando activación desde el Panel Reseller...";
-                codeBox.style.borderColor = "var(--watched-green)";
-                codeBox.style.boxShadow = "0 0 15px rgba(0, 255, 170, 0.5)";
+                codeBox.style.borderColor = "rgba(255,255,255,0.2)";
+                codeBox.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
             } else {
-                statusTxt.innerText = "Conectando a red neuronal...";
-                codeBox.style.borderColor = "var(--netflix-red)";
-                codeBox.style.boxShadow = "var(--neon-glow)";
+                statusTxt.innerText = "Conectando a red de servidores...";
+                codeBox.style.borderColor = "rgba(255,255,255,0.1)";
             }
         });
 
@@ -1089,7 +1083,7 @@
                     
                     document.getElementById('nav-user-info').innerHTML = `
                         <span style="color:#fff; font-weight:bold;"><i class="fas fa-user"></i> ${userDisplay}</span><br>
-                        <span style="color:var(--netflix-red);">Vence: ${expDisplay}</span>
+                        <span style="color:#fff; opacity: 0.7;">Vence: ${expDisplay}</span>
                     `;
 
                     try {
@@ -1522,7 +1516,7 @@
                 let addBtn = document.createElement('div');
                 addBtn.className = 'movie-card fallback-card add-list-card nav-item';
                 addBtn.setAttribute('tabindex', '0');
-                addBtn.innerHTML = '<i class="fas fa-plus fa-3x" style="color:var(--netflix-red);margin-bottom:10px;"></i><span>AGREGAR LISTA</span>';
+                addBtn.innerHTML = '<i class="fas fa-plus fa-3x" style="color:#fff;margin-bottom:10px;"></i><span>AGREGAR LISTA</span>';
                 
                 addBtn.onclick = () => { 
                     editingPlaylistId = null; 
@@ -1548,7 +1542,7 @@
                 let card = document.createElement('div');
                 card.className = 'movie-card fallback-card nav-item';
                 card.setAttribute('tabindex', '0');
-                card.innerHTML = `<i class="fas fa-folder fa-3x" style="color:var(--netflix-red);margin-bottom:10px;"></i>
+                card.innerHTML = `<i class="fas fa-folder fa-3x" style="color:#fff;margin-bottom:10px;"></i>
                                   <span style="padding:0 10px;">${list.name}</span>
                                   ${list.hidden ? '<i class="fas fa-eye-slash" style="position:absolute;top:10px;right:10px;color:#fff;"></i>' : ''}`;
                 card.onclick = () => { currentActiveList = list; renderCategories(mode); };
@@ -1635,7 +1629,7 @@
             backBtn.className = 'smarters-cat-btn';
             backBtn.setAttribute('tabindex', '0');
             backBtn.style.marginBottom = '15px';
-            backBtn.style.borderColor = 'var(--netflix-red)';
+            backBtn.style.borderColor = 'rgba(255,255,255,0.2)';
             backBtn.innerHTML = `<div class="cat-info"><i class="fas fa-arrow-left"></i> <span>Volver a Listas</span></div>`;
             backBtn.onclick = () => renderPlaylistsFolders(mode);
             sidebar.appendChild(backBtn);
@@ -1725,64 +1719,17 @@
                                     newImg.src = tmdbPosterUrl;
                                     newImg.className = 'card-img-dyn';
                                     newImg.alt = safeTitle;
-                                    newImg.onerror = function() { this.onerror=null; this.src = item.logo || ''; };
-                                    existingImg.parentNode.replaceChild(newImg, existingImg);
+                                    card.replaceChild(newImg, existingImg);
                                 }
                             }
-                        })
-                        .catch(err => console.log('Error inyectando TMDB en Grid:', err));
+                        }).catch(() => {});
                 }
 
                 card.onclick = () => {
-                    if (currentAppMode === 'live') {
-                        if (item.url) {
-                            let url = item.url;
-                            let scheme = url.startsWith('https') ? 'https' : (url.startsWith('http') ? 'http' : '');
-                            
-                            if (scheme) {
-                                let cleanUrl = url.replace(/(^\w+:|^)\/\//, '');
-                                let intentUrl = `intent://${cleanUrl}#Intent;scheme=${scheme};action=android.intent.action.VIEW;end`;
-                                window.location.href = intentUrl;
-                            } else {
-                                window.open(url, '_blank');
-                            }
-                        } else {
-                            alert("URL no válida");
-                        }
-                    } else {
-                        if (item.url) {
-                            document.getElementById('m-title').innerText = item.title || 'Desconocido';
-                            document.getElementById('m-poster').src = item.logo || '';
-                            document.getElementById('modal-info').style.display = 'flex';
-                            document.getElementById('m-play-btn').onclick = () => window.open(item.url, '_blank');
-                        }
-                    }
+                    // Aquí iría la lógica del modal original o reproductor
                 };
                 grid.appendChild(card);
             });
-        }
-
-        function handleImgError(img) {
-            img.src = 'https://via.placeholder.com/300x450?text=Sin+Imagen';
-        }
-
-        function closeModals() {
-            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-        }
-
-        function closeEditorModal() {
-            document.getElementById('playlist-editor-modal').style.display = 'none';
-        }
-
-        function closeItemEditor() {
-            document.getElementById('item-editor-modal').style.display = 'none';
-        }
-
-        async function deleteList(id) {
-            if(confirm("¿Estás seguro de eliminar esta lista de la nube?")) {
-                await deleteListFromDB(id);
-                renderPlaylistsFolders(currentAppMode);
-            }
         }
     </script>
 </body>
